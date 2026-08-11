@@ -2,6 +2,8 @@ import type { RequestHandler } from 'express';
 
 import { SESSION_COOKIE_NAME } from '../config/session.js';
 import { rotateCsrfToken } from '../middlewares/csrf.js';
+import { Catway } from '../models/catway.js';
+import { Reservation } from '../models/reservation.js';
 import { User } from '../models/user.js';
 
 const HOME_TITLE = 'Russell Marina API';
@@ -97,15 +99,34 @@ export const logoutAction: RequestHandler = (request, response, next) => {
   });
 };
 
-export const showDashboardAction: RequestHandler = (_request, response) => {
-  response.render('dashboard', {
-    title: 'Tableau de bord',
-    currentUser: response.locals.currentUser,
-    today: new Intl.DateTimeFormat('fr-FR', {
+export const showDashboardAction: RequestHandler = async (_request, response, next) => {
+  try {
+    const now = new Date();
+    const [currentReservations, catwayCount, reservationCount, userCount] = await Promise.all([
+      Reservation.find({ startDate: { $lte: now }, endDate: { $gte: now } }).sort({
+        endDate: 1,
+        catwayNumber: 1,
+      }),
+      Catway.countDocuments(),
+      Reservation.countDocuments(),
+      User.countDocuments(),
+    ]);
+    const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
       dateStyle: 'long',
       timeZone: 'Europe/Paris',
-    }).format(new Date()),
-  });
+    });
+
+    response.render('dashboard', {
+      title: 'Tableau de bord',
+      currentUser: response.locals.currentUser,
+      today: dateFormatter.format(now),
+      currentReservations,
+      dateFormatter,
+      statistics: { catwayCount, reservationCount, userCount },
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 export const showDocumentationPlaceholderAction: RequestHandler = (_request, response) => {

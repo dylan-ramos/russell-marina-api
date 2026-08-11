@@ -294,6 +294,9 @@
   .min-w-full {
     min-width: 100%;
   }
+  .cursor-pointer {
+    cursor: pointer;
+  }
   .list-disc {
     list-style-type: disc;
   }
@@ -314,6 +317,9 @@
   }
   .justify-end {
     justify-content: flex-end;
+  }
+  .gap-2 {
+    gap: calc(var(--spacing) * 2);
   }
   .gap-3 {
     gap: calc(var(--spacing) * 3);
@@ -647,6 +653,14 @@
     .hover\:border-cyan-300:hover {
       border-color: var(--color-cyan-300);
     }
+    .hover\:border-cyan-400\/40:hover {
+      border-color: color-mix(in srgb, oklch(78.9% 0.154 211.53) 40%, transparent);
+    }
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:border-cyan-400\/40:hover {
+        border-color: color-mix(in oklab, var(--color-cyan-400) 40%, transparent);
+      }
+    }
     .hover\:bg-cyan-300:hover {
       background-color: var(--color-cyan-300);
     }
@@ -720,6 +734,9 @@
   @media (width >= 40rem) {
     .sm\:grid-cols-2 {
       grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .sm\:grid-cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
     .sm\:p-10 {
       padding: calc(var(--spacing) * 10);

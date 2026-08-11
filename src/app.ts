@@ -58,6 +58,7 @@ const errorHandler: ErrorRequestHandler = (error, request, response, _next) => {
 
   response.locals.message = message;
   response.locals.error = request.app.get('env') === 'development' ? error : {};
+  response.locals.status = status;
   response.status(status);
   response.render('error');
 };

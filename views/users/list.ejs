@@ -7,17 +7,7 @@
     <link rel="stylesheet" href="/stylesheets/style.css" />
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
-    <header class="border-b border-slate-800 bg-slate-900">
-      <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4" aria-label="Navigation principale">
-        <a class="text-lg font-bold text-cyan-300" href="/dashboard">Russell Marina</a>
-        <div class="flex items-center gap-3">
-          <a class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white" href="/catways">Catways</a>
-          <a class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white" href="/reservations">Réservations</a>
-          <a class="rounded-lg bg-slate-800 px-3 py-2 text-sm text-white" href="/users">Utilisateurs</a>
-          <a class="rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-300 hover:bg-red-950/40" href="/logout">Déconnexion</a>
-        </div>
-      </nav>
-    </header>
+    <%- include('../partials/navigation', { active: 'users' }) %>
 
     <main class="mx-auto max-w-6xl px-6 py-12">
       <div class="flex flex-wrap items-end justify-between gap-5">
