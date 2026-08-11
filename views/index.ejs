@@ -7,13 +7,74 @@
     <link rel="stylesheet" href="/stylesheets/style.css" />
   </head>
   <body class="min-h-screen bg-slate-950 text-slate-100">
-    <main class="mx-auto flex min-h-screen max-w-5xl items-center px-6 py-16">
-      <section class="w-full rounded-3xl border border-cyan-400/20 bg-slate-900 p-8 shadow-2xl shadow-cyan-950/40 sm:p-12">
-        <p class="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">Port de plaisance Russell</p>
+    <main class="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-2">
+      <section>
+        <p class="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
+          Port de plaisance Russell
+        </p>
         <h1 class="text-4xl font-bold tracking-tight sm:text-6xl"><%= title %></h1>
         <p class="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-          Le squelette Express 5 fonctionne avec TypeScript, EJS et Tailwind CSS.
+          Une application privée destinée à la capitainerie pour administrer les catways,
+          les réservations et les utilisateurs du port.
         </p>
+        <a
+          class="mt-8 inline-flex rounded-lg border border-cyan-400/40 px-4 py-2 font-semibold text-cyan-300 transition hover:border-cyan-300 hover:text-cyan-200"
+          href="/api-docs"
+        >
+          Consulter la documentation de l’API
+        </a>
+      </section>
+
+      <section class="rounded-3xl border border-cyan-400/20 bg-slate-900 p-8 shadow-2xl shadow-cyan-950/40 sm:p-10">
+        <h2 class="text-2xl font-bold">Connexion à la capitainerie</h2>
+        <p class="mt-2 text-slate-400">Utilisez le compte administrateur configuré sur le serveur.</p>
+
+        <% if (error) { %>
+          <div class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-sm text-red-200" role="alert">
+            <%= error %>
+          </div>
+        <% } %>
+
+        <form class="mt-8 space-y-6" action="/login" method="post">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-200" for="email">
+              Adresse email
+            </label>
+            <input
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+              id="email"
+              name="email"
+              type="email"
+              value="<%= email %>"
+              autocomplete="email"
+              maxlength="254"
+              required
+            />
+          </div>
+
+          <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-200" for="password">
+              Mot de passe
+            </label>
+            <input
+              class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
+              id="password"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </div>
+
+          <button
+            class="w-full rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950 transition hover:bg-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:ring-offset-2 focus:ring-offset-slate-900"
+            type="submit"
+          >
+            Se connecter
+          </button>
+        </form>
       </section>
     </main>
   </body>
