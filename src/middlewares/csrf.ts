@@ -16,12 +16,15 @@ function tokensMatch(expectedToken: string, submittedToken: string): boolean {
 export const provideCsrfToken: RequestHandler = (request, response, next) => {
   request.session.csrfToken ??= createToken();
   response.locals.csrfToken = request.session.csrfToken;
+  response.setHeader('X-CSRF-Token', request.session.csrfToken);
   next();
 };
 
 export const verifyCsrfToken: RequestHandler = (request, _response, next) => {
   const expectedToken = request.session.csrfToken;
-  const submittedToken = typeof request.body._csrf === 'string' ? request.body._csrf : '';
+  const headerToken = request.get('X-CSRF-Token');
+  const submittedToken =
+    typeof request.body?._csrf === 'string' ? request.body._csrf : (headerToken ?? '');
 
   if (!expectedToken || !tokensMatch(expectedToken, submittedToken)) {
     next(createError(403, 'Le formulaire a expiré. Rechargez la page puis réessayez.'));
