@@ -58,7 +58,10 @@ Les identifiants de connexion sont les valeurs `SEED_ADMIN_EMAIL` et `SEED_ADMIN
 | `make test`                        | Lancer les tests Node                                 |
 | `make format`                      | Appliquer Prettier                                    |
 | `make prod-build` / `make prod-up` | Construire et lancer la production                    |
+| `make prod-deploy`                 | Valider, construire et lancer la production           |
 | `make prod-seed`                   | Importer les données en production                    |
+| `make prod-ps` / `make prod-logs`  | Contrôler les conteneurs de production                |
+| `make prod-backup`                 | Créer une archive MongoDB locale compressée           |
 
 Les commandes d'arrêt ne suppriment pas le volume MongoDB.
 
@@ -136,15 +139,57 @@ data/                 données initiales fournies avec le devoir
 
 La production utilise l'image multi-étapes du `Dockerfile`. MongoDB reste exclusivement sur le réseau Docker interne ; seul Express rejoint le réseau externe `proxy` de Traefik.
 
-Sur le VPS, après avoir créé `.env.local` :
+Sur le VPS, créer `.env.local`, remplacer tous les secrets et limiter sa lecture :
 
 ```bash
-make prod-build
-make prod-up
+cp .env .env.local
+chmod 600 .env.local
+```
+
+Valider puis déployer :
+
+```bash
+make prod-deploy
 make prod-seed
+make prod-ps
 ```
 
 Traefik termine HTTPS et transmet les requêtes au port interne 3000. Le port MongoDB n'est jamais publié.
+
+Après une mise à jour, sauvegarder les données avant de reconstruire :
+
+```bash
+git pull --ff-only
+make prod-backup
+make prod-deploy
+```
+
+Contrôles à effectuer après chaque déploiement :
+
+```bash
+make prod-ps
+curl --fail https://russell-marina-api.srv924756.hstgr.cloud/health
+```
+
+Vérifier ensuite dans le navigateur la connexion, les trois CRUD et `/api-docs`. `make prod-seed` est idempotent et ne duplique pas les données s'il est relancé.
+
+### Sauvegarde et restauration MongoDB
+
+Créer une sauvegarde horodatée dans le dossier local ignoré `backups/` :
+
+```bash
+make prod-backup
+```
+
+Les archives sont compressées et protégées avec des permissions locales restrictives. Elles contiennent les données du port : elles ne doivent jamais être commitées ni rendues publiques.
+
+La restauration remplace les collections existantes. Elle exige donc le chemin explicite de l'archive et une confirmation :
+
+```bash
+make prod-restore BACKUP=backups/russell-marina-AAAAMMJJTHHMMSSZ.archive.gz CONFIRM=restore
+```
+
+Effectuer une nouvelle sauvegarde avant toute restauration.
 
 ## Sécurité
 
@@ -156,3 +201,10 @@ Traefik termine HTTPS et transmet les requêtes au port interne 3000. Le port Mo
 - en-têtes Helmet et absence de stack en production ;
 - validation explicite et Mongoose des entrées ;
 - aucun secret versionné et aucun port MongoDB public.
+
+## Informations pour le livrable
+
+- Dépôt public : <https://github.com/dylan-ramos/russell-marina-api>
+- Application HTTPS : <https://russell-marina-api.srv924756.hstgr.cloud>
+- Documentation : <https://russell-marina-api.srv924756.hstgr.cloud/api-docs>
+- Compte de démonstration : utiliser l'adresse et le mot de passe `SEED_ADMIN_*` configurés uniquement dans le `.env.local` du VPS. Transmettre ces deux valeurs au correcteur séparément du dépôt Git.

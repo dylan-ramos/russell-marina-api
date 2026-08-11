@@ -4,10 +4,12 @@ ENV_FILES := --env-file .env --env-file .env.local
 COMPOSE := docker compose $(ENV_FILES)
 COMPOSE_DEV := $(COMPOSE) -f compose.yaml -f compose.dev.yaml
 COMPOSE_PROD := $(COMPOSE) -f compose.yaml
+BACKUP_DIR ?= backups
+BACKUP_FILE ?= $(BACKUP_DIR)/russell-marina-$(shell date -u +%Y%m%dT%H%M%SZ).archive.gz
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed reset-admin clean prod-build prod-up prod-down prod-logs prod-seed prod-reset-admin
+.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed reset-admin clean prod-config prod-build prod-up prod-deploy prod-down prod-restart prod-ps prod-logs prod-seed prod-reset-admin prod-backup prod-restore
 
 help: ## Affiche les commandes disponibles
 	@awk 'BEGIN {FS = ":.*## "; printf "Commandes disponibles :\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -67,14 +69,24 @@ reset-admin: check-env ## Remplace l'unique utilisateur avec les valeurs SEED_AD
 
 clean: down ## Arrête les services sans supprimer les données MongoDB
 
+prod-config: check-env ## Valide la configuration Compose de production
+	@$(COMPOSE_PROD) config --quiet
+
 prod-build: check-env ## Construit les images de production
 	@$(COMPOSE_PROD) build
 
 prod-up: check-env network ## Démarre l'environnement de production
 	@$(COMPOSE_PROD) up -d
 
+prod-deploy: prod-config prod-build prod-up ## Valide, construit et démarre la production
+
 prod-down: check-env ## Arrête l'environnement de production
 	@$(COMPOSE_PROD) down --remove-orphans
+
+prod-restart: prod-down prod-up ## Redémarre l'environnement de production
+
+prod-ps: check-env ## Affiche l'état des conteneurs de production
+	@$(COMPOSE_PROD) ps
 
 prod-logs: check-env ## Suit les journaux de production
 	@$(COMPOSE_PROD) logs -f
@@ -84,3 +96,16 @@ prod-seed: check-env ## Importe les données initiales en production
 
 prod-reset-admin: check-env prod-build ## Reconstruit puis remplace l'unique utilisateur de production
 	@$(COMPOSE_PROD) run --rm app npm run admin:reset
+
+prod-backup: check-env ## Sauvegarde MongoDB dans une archive locale compressée
+	@mkdir -p "$(BACKUP_DIR)"
+	@$(COMPOSE_PROD) exec -T mongodb sh -c 'mongodump --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --db "$$MONGO_INITDB_DATABASE" --archive --gzip' > "$(BACKUP_FILE)"
+	@chmod 600 "$(BACKUP_FILE)"
+	@echo "Sauvegarde créée : $(BACKUP_FILE)"
+
+prod-restore: check-env ## Restaure BACKUP=... avec CONFIRM=restore (destructif)
+	@test -n "$(BACKUP)" || (echo "Indiquez l'archive : make prod-restore BACKUP=backups/fichier.archive.gz CONFIRM=restore" && exit 1)
+	@test -f "$(BACKUP)" || (echo "Archive introuvable : $(BACKUP)" && exit 1)
+	@test "$(CONFIRM)" = "restore" || (echo "Restauration annulée. Ajoutez CONFIRM=restore pour remplacer les données actuelles." && exit 1)
+	@$(COMPOSE_PROD) exec -T mongodb sh -c 'mongorestore --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --archive --gzip --drop' < "$(BACKUP)"
+	@echo "Restauration terminée depuis $(BACKUP)"

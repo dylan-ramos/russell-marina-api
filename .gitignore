@@ -17,6 +17,9 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 
+# Local MongoDB backups
+backups/
+
 # nyc test coverage
 .nyc_output
 
