@@ -33,13 +33,19 @@ export async function connectTestDatabase(): Promise<void> {
     throw new Error('Une connexion MongoDB existe déjà avant le démarrage des tests.');
   }
 
-  await mongoose.connect(requiredTestMongoUri(), { serverSelectionTimeoutMS: 5_000 });
+  const mongoUri = requiredTestMongoUri();
+  process.env.NODE_ENV = 'test';
+  process.env.MONGO_URI = mongoUri;
+  process.env.SESSION_SECRET = 'test-session-secret-with-at-least-32-characters';
+
+  await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5_000 });
   await mongoose.connection.dropDatabase();
 }
 
 export async function resetTestDatabase(): Promise<void> {
   if (mongoose.connection.readyState === 1) {
     await mongoose.connection.dropDatabase();
+    await Promise.all(Object.values(mongoose.models).map((model) => model.syncIndexes()));
   }
 }
 

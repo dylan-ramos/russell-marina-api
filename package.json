@@ -9,7 +9,7 @@
     "dev:server": "tsx watch src/bin/www.ts",
     "build": "npm run typecheck && npm run css:build && tsc",
     "start": "node dist/bin/www.js",
-    "test": "tsx --test test/**/*.test.ts",
+    "test": "tsx --test --test-concurrency=1 test/**/*.test.ts",
     "seed": "node dist/scripts/seed.js",
     "seed:dev": "tsx src/scripts/seed.ts",
     "admin:reset": "node dist/scripts/reset-admin.js",

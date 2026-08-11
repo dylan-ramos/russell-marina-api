@@ -23,18 +23,13 @@ export function createSessionMiddleware(): ReturnType<typeof session> {
   }
 
   const isProduction = process.env.NODE_ENV === 'production';
+  const isTest = process.env.NODE_ENV === 'test';
   const options: SessionOptions = {
     name: SESSION_COOKIE_NAME,
     secret,
     resave: false,
     saveUninitialized: false,
     rolling: true,
-    store: MongoStore.create({
-      mongoUrl: mongoUri,
-      collectionName: 'sessions',
-      ttl: SESSION_DURATION_MS / 1_000,
-      autoRemove: 'native',
-    }),
     cookie: {
       httpOnly: true,
       sameSite: 'lax',
@@ -43,6 +38,15 @@ export function createSessionMiddleware(): ReturnType<typeof session> {
       path: '/',
     },
   };
+
+  if (!isTest) {
+    options.store = MongoStore.create({
+      mongoUrl: mongoUri,
+      collectionName: 'sessions',
+      ttl: SESSION_DURATION_MS / 1_000,
+      autoRemove: 'native',
+    });
+  }
 
   return session(options);
 }
