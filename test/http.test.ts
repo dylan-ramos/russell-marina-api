@@ -4,8 +4,11 @@ import { after, before, beforeEach, describe, test } from 'node:test';
 import type { Express } from 'express';
 import request, { type Agent } from 'supertest';
 
+import { Catway } from '../src/models/catway.js';
+import { Reservation } from '../src/models/reservation.js';
 import { User } from '../src/models/user.js';
 import { createUser } from '../src/services/users.js';
+import { calendarDateInTimeZone } from '../src/utils/calendar-date.js';
 import {
   connectTestDatabase,
   disconnectTestDatabase,
@@ -319,5 +322,22 @@ describe('API HTTP', () => {
     assert.equal(malformedJson.body.error.status, 400);
   });
   test.todo('empêche deux réservations concurrentes qui se chevauchent');
-  test.todo('conserve une réservation courante pendant toute sa date de fin');
+  test('conserve une réservation courante pendant toute sa date de fin', async () => {
+    const today = calendarDateInTimeZone(new Date(), 'Europe/Paris');
+    await Catway.create({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' });
+    await Reservation.create({
+      catwayNumber: 42,
+      clientName: 'Client du dernier jour',
+      boatName: 'Calendrier',
+      startDate: new Date(`${today}T00:00:00.000Z`),
+      endDate: new Date(`${today}T00:00:00.000Z`),
+    });
+
+    const { agent } = await authenticatedAgent();
+    await agent
+      .get('/dashboard')
+      .set('Accept', 'text/html')
+      .expect(200)
+      .expect(/Client du dernier jour/);
+  });
 });

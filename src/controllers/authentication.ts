@@ -5,6 +5,7 @@ import { rotateCsrfToken } from '../middlewares/csrf.js';
 import { Catway } from '../models/catway.js';
 import { Reservation } from '../models/reservation.js';
 import { User } from '../models/user.js';
+import { encodedCalendarDayBounds } from '../utils/calendar-date.js';
 
 const HOME_TITLE = 'Russell Marina API';
 
@@ -102,8 +103,9 @@ export const logoutAction: RequestHandler = (request, response, next) => {
 export const showDashboardAction: RequestHandler = async (_request, response, next) => {
   try {
     const now = new Date();
+    const today = encodedCalendarDayBounds(now, 'Europe/Paris');
     const [currentReservations, catwayCount, reservationCount, userCount] = await Promise.all([
-      Reservation.find({ startDate: { $lte: now }, endDate: { $gte: now } }).sort({
+      Reservation.find({ startDate: { $lt: today.next }, endDate: { $gte: today.start } }).sort({
         endDate: 1,
         catwayNumber: 1,
       }),

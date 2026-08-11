@@ -97,6 +97,23 @@ describe('service des réservations', () => {
       (error) => errorStatus(error) === 422,
     );
   });
+
+  test('refuse les dates non ISO et les dates calendaires impossibles', async () => {
+    const validInput = {
+      clientName: 'Client valide',
+      boatName: 'Bateau valide',
+      endDate: '2026-11-10',
+    };
+
+    await assert.rejects(
+      createReservation(42, { ...validInput, startDate: '10/11/2026' }),
+      (error) => errorStatus(error) === 422,
+    );
+    await assert.rejects(
+      createReservation(42, { ...validInput, startDate: '2026-02-30' }),
+      (error) => errorStatus(error) === 422,
+    );
+  });
 });
 
 describe('service des utilisateurs', () => {

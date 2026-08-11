@@ -3,6 +3,7 @@ import { isValidObjectId, type HydratedDocument } from 'mongoose';
 
 import { Catway } from '../models/catway.js';
 import { Reservation, type ReservationDocument } from '../models/reservation.js';
+import { parseCalendarDate } from '../utils/calendar-date.js';
 
 export interface ReservationInput {
   clientName: unknown;
@@ -21,25 +22,11 @@ function requiredText(value: unknown, fieldName: string): string {
   return value.trim();
 }
 
-function requiredDate(value: unknown, fieldName: string): Date {
-  if (typeof value !== 'string' && !(value instanceof Date)) {
-    throw createError(422, `${fieldName} est obligatoire.`);
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    throw createError(422, `${fieldName} n'est pas valide.`);
-  }
-
-  return date;
-}
-
 function normalizeInput(
   input: ReservationInput,
 ): Omit<ReservationDocument, 'catwayNumber' | 'createdAt' | 'updatedAt'> {
-  const startDate = requiredDate(input.startDate, 'La date de début');
-  const endDate = requiredDate(input.endDate, 'La date de fin');
+  const startDate = parseCalendarDate(input.startDate, 'La date de début');
+  const endDate = parseCalendarDate(input.endDate, 'La date de fin');
 
   if (endDate < startDate) {
     throw createError(422, 'La date de fin doit être postérieure à la date de début.');
