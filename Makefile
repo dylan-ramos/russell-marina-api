@@ -82,5 +82,5 @@ prod-logs: check-env ## Suit les journaux de production
 prod-seed: check-env ## Importe les données initiales en production
 	@$(COMPOSE_PROD) exec app npm run seed
 
-prod-reset-admin: check-env ## Remplace l'unique utilisateur de production
-	@$(COMPOSE_PROD) exec app npm run admin:reset
+prod-reset-admin: check-env prod-build ## Reconstruit puis remplace l'unique utilisateur de production
+	@$(COMPOSE_PROD) run --rm app npm run admin:reset
