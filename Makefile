@@ -7,7 +7,7 @@ COMPOSE_PROD := $(COMPOSE) -f compose.yaml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed clean prod-build prod-up prod-down prod-logs prod-seed
+.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed reset-admin clean prod-build prod-up prod-down prod-logs prod-seed prod-reset-admin
 
 help: ## Affiche les commandes disponibles
 	@awk 'BEGIN {FS = ":.*## "; printf "Commandes disponibles :\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -62,6 +62,9 @@ test: check-env ## Lance les tests dans le conteneur
 seed: check-env ## Importe les données initiales sans créer de doublons
 	@$(COMPOSE_DEV) exec app npm run seed:dev
 
+reset-admin: check-env ## Remplace l'unique utilisateur avec les valeurs SEED_ADMIN_*
+	@$(COMPOSE_DEV) exec app npm run admin:reset:dev
+
 clean: down ## Arrête les services sans supprimer les données MongoDB
 
 prod-build: check-env ## Construit les images de production
@@ -78,3 +81,6 @@ prod-logs: check-env ## Suit les journaux de production
 
 prod-seed: check-env ## Importe les données initiales en production
 	@$(COMPOSE_PROD) exec app npm run seed
+
+prod-reset-admin: check-env ## Remplace l'unique utilisateur de production
+	@$(COMPOSE_PROD) exec app npm run admin:reset
