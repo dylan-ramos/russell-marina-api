@@ -4,7 +4,6 @@ import {
   loginAction,
   logoutAction,
   showDashboardAction,
-  showDocumentationPlaceholderAction,
   showHomePageAction,
 } from '../controllers/authentication.js';
 import { requireAuthentication } from '../middlewares/authentication.js';
@@ -17,6 +16,5 @@ router.get('/', provideCsrfToken, showHomePageAction);
 router.post('/login', loginRateLimit, provideCsrfToken, verifyCsrfToken, loginAction);
 router.get('/logout', logoutAction);
 router.get('/dashboard', requireAuthentication, showDashboardAction);
-router.get('/api-docs', showDocumentationPlaceholderAction);
 
 export default router;

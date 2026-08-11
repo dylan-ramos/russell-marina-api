@@ -1,11 +1,22 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
 
 import { User } from '../models/user.js';
+
+function rejectAuthentication(request: Request, response: Response): void {
+  if (request.accepts(['html', 'json']) === 'json') {
+    response.status(401).json({
+      error: { status: 401, message: 'Vous devez vous connecter pour accéder à cette ressource.' },
+    });
+    return;
+  }
+
+  response.redirect('/?authentication=required');
+}
 
 export const requireAuthentication: RequestHandler = async (request, response, next) => {
   try {
     if (!request.session.userId) {
-      response.redirect('/?authentication=required');
+      rejectAuthentication(request, response);
       return;
     }
 
@@ -13,7 +24,7 @@ export const requireAuthentication: RequestHandler = async (request, response, n
 
     if (!user) {
       request.session.destroy(() => {
-        response.redirect('/?authentication=required');
+        rejectAuthentication(request, response);
       });
       return;
     }

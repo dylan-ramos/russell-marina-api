@@ -128,7 +128,3 @@ export const showDashboardAction: RequestHandler = async (_request, response, ne
     next(error);
   }
 };
-
-export const showDocumentationPlaceholderAction: RequestHandler = (_request, response) => {
-  response.render('documentation', { title: "Documentation de l'API" });
-};
