@@ -69,12 +69,31 @@ describe('API HTTP', () => {
     assert.equal(documentation.body.openapi, '3.1.0');
   });
 
-  test('refuse une route privée sans session', async () => {
-    const response = await request(application)
-      .get('/catways')
-      .set('Accept', 'application/json')
-      .expect(401);
-    assert.equal(response.body.error.status, 401);
+  test('refuse toutes les familles de routes privées sans session', async () => {
+    const protectedRequests = [
+      request(application).get('/dashboard'),
+      request(application).get('/catways'),
+      request(application).get('/catways/new'),
+      request(application).get('/catways/42'),
+      request(application).post('/catways'),
+      request(application).put('/catways/42'),
+      request(application).delete('/catways/42'),
+      request(application).get('/reservations'),
+      request(application).get('/reservations/new'),
+      request(application).post('/reservations'),
+      request(application).get('/catways/42/reservations'),
+      request(application).post('/catways/42/reservations'),
+      request(application).get('/users'),
+      request(application).get('/users/new'),
+      request(application).post('/users'),
+      request(application).put('/users/user%40example.test'),
+      request(application).delete('/users/user%40example.test'),
+    ];
+
+    for (const protectedRequest of protectedRequests) {
+      const response = await protectedRequest.set('Accept', 'application/json').expect(401);
+      assert.equal(response.body.error.status, 401);
+    }
   });
 
   test('refuse un identifiant incorrect puis ouvre une session valide', async () => {
@@ -124,6 +143,9 @@ describe('API HTTP', () => {
     const reservationId = reservationResponse.body._id as string;
     assert.equal(typeof reservationId, 'string');
 
+    const reservedCatwayDeletion = await agent.delete('/catways/42').set(jsonHeaders).expect(409);
+    assert.equal(reservedCatwayDeletion.body.error.status, 409);
+
     await agent
       .put(`/catways/42/reservations/${reservationId}`)
       .set(jsonHeaders)
@@ -155,11 +177,75 @@ describe('API HTTP', () => {
       })
       .expect(200);
 
+    const ownAccountDeletion = await agent
+      .delete('/users/admin%40example.test')
+      .set(jsonHeaders)
+      .expect(409);
+    assert.equal(ownAccountDeletion.body.error.status, 409);
+
     await agent.delete(`/catways/42/reservations/${reservationId}`).set(jsonHeaders).expect(204);
     await agent.delete('/catways/42').set(jsonHeaders).expect(204);
     await agent.delete('/users/adjoint%40example.test').set(jsonHeaders).expect(204);
 
     assert.equal(await User.countDocuments(), 1);
+  });
+
+  test('affiche les formulaires HTML et leurs erreurs de validation', async () => {
+    const { agent, csrfToken } = await authenticatedAgent();
+
+    await agent
+      .get('/catways/new')
+      .set('Accept', 'text/html')
+      .expect(200)
+      .expect('Content-Type', /html/);
+    await agent
+      .get('/reservations/new')
+      .set('Accept', 'text/html')
+      .expect(200)
+      .expect('Content-Type', /html/);
+    await agent
+      .get('/users/new')
+      .set('Accept', 'text/html')
+      .expect(200)
+      .expect('Content-Type', /html/);
+
+    await agent
+      .post('/catways')
+      .set('Accept', 'text/html')
+      .set('X-CSRF-Token', csrfToken)
+      .type('form')
+      .send({ catwayNumber: 0, catwayType: 'invalid', catwayState: '' })
+      .expect(422)
+      .expect('Content-Type', /html/);
+
+    await agent
+      .post('/users')
+      .set('Accept', 'text/html')
+      .set('X-CSRF-Token', csrfToken)
+      .type('form')
+      .send({ username: 'x', email: 'invalid', password: 'court' })
+      .expect(422)
+      .expect('Content-Type', /html/);
+
+    await agent
+      .post('/catways')
+      .set('Accept', 'application/json')
+      .set('X-CSRF-Token', csrfToken)
+      .send({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' })
+      .expect(201);
+    await agent
+      .post('/catways/42/reservations')
+      .set('Accept', 'text/html')
+      .set('X-CSRF-Token', csrfToken)
+      .type('form')
+      .send({
+        clientName: 'A',
+        boatName: 'B',
+        startDate: '2026-10-10',
+        endDate: '2026-10-12',
+      })
+      .expect(422)
+      .expect('Content-Type', /html/);
   });
 
   test.todo('renvoie 422 plutôt que 500 pour une réservation JSON invalide');

@@ -6,6 +6,7 @@ import session from 'express-session';
 import request from 'supertest';
 
 import { provideCsrfToken, verifyCsrfToken } from '../src/middlewares/csrf.js';
+import { loginRateLimit } from '../src/middlewares/login-rate-limit.js';
 
 function csrfTestApplication() {
   const application = express();
@@ -48,5 +49,28 @@ describe('protection CSRF', () => {
       .set('X-CSRF-Token', tokenResponse.body.token as string)
       .send({})
       .expect(204);
+  });
+});
+
+describe('limitation des connexions', () => {
+  test('ignore les succès puis bloque la onzième tentative en échec', async () => {
+    const application = express();
+    application.use(express.json());
+    application.post('/login', loginRateLimit, (incomingRequest, response) => {
+      response.sendStatus(incomingRequest.body.success === true ? 204 : 401);
+    });
+
+    await request(application).post('/login').send({ success: true }).expect(204);
+
+    for (let attempt = 1; attempt <= 10; attempt += 1) {
+      await request(application).post('/login').send({ success: false }).expect(401);
+    }
+
+    const blockedResponse = await request(application)
+      .post('/login')
+      .send({ success: false })
+      .expect(429);
+    assert.match(blockedResponse.text, /Trop de tentatives de connexion/);
+    assert.ok(blockedResponse.headers['ratelimit']);
   });
 });
