@@ -6,6 +6,7 @@ services:
     command: npm run dev
     environment:
       NODE_ENV: development
+      TEST_MONGO_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/${MONGO_DATABASE}_test?authSource=admin
     ports:
       - 127.0.0.1:${APP_PORT}:3000
     volumes:
@@ -13,3 +14,5 @@ services:
       - ./views:/app/views
       - ./public:/app/public
       - ./data:/app/data
+      - ./test:/app/test:ro
+      - ./tsconfig.test.json:/app/tsconfig.test.json:ro
