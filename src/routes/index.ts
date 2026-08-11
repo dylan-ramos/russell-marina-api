@@ -1,11 +1,11 @@
 import { Router } from 'express';
 
 import {
-  login,
-  logout,
-  showDashboard,
-  showDocumentationPlaceholder,
-  showHomePage,
+  loginAction,
+  logoutAction,
+  showDashboardAction,
+  showDocumentationPlaceholderAction,
+  showHomePageAction,
 } from '../controllers/authentication.js';
 import { requireAuthentication } from '../middlewares/authentication.js';
 import { provideCsrfToken, verifyCsrfToken } from '../middlewares/csrf.js';
@@ -13,10 +13,10 @@ import { loginRateLimit } from '../middlewares/login-rate-limit.js';
 
 const router = Router();
 
-router.get('/', provideCsrfToken, showHomePage);
-router.post('/login', loginRateLimit, provideCsrfToken, verifyCsrfToken, login);
-router.get('/logout', logout);
-router.get('/dashboard', requireAuthentication, showDashboard);
-router.get('/api-docs', showDocumentationPlaceholder);
+router.get('/', provideCsrfToken, showHomePageAction);
+router.post('/login', loginRateLimit, provideCsrfToken, verifyCsrfToken, loginAction);
+router.get('/logout', logoutAction);
+router.get('/dashboard', requireAuthentication, showDashboardAction);
+router.get('/api-docs', showDocumentationPlaceholderAction);
 
 export default router;

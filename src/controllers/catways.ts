@@ -84,7 +84,7 @@ function handleFormError(
   });
 }
 
-export const listCatways: RequestHandler = async (request, response, next) => {
+export const listCatwaysAction: RequestHandler = async (request, response, next) => {
   try {
     const catways = await Catway.find().sort({ catwayNumber: 1 });
 
@@ -110,7 +110,7 @@ export const listCatways: RequestHandler = async (request, response, next) => {
   }
 };
 
-export const showCatway: RequestHandler = async (request, response, next) => {
+export const showCatwayAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
     const catway = await Catway.findOne({ catwayNumber });
@@ -135,7 +135,7 @@ export const showCatway: RequestHandler = async (request, response, next) => {
   }
 };
 
-export const showCreateCatwayForm: RequestHandler = (_request, response) => {
+export const showCreateCatwayFormAction: RequestHandler = (_request, response) => {
   response.render('catways/form', {
     title: 'Ajouter un catway',
     mode: 'create',
@@ -145,7 +145,7 @@ export const showCreateCatwayForm: RequestHandler = (_request, response) => {
   });
 };
 
-export const createCatway: RequestHandler = async (request, response, next) => {
+export const createCatwayAction: RequestHandler = async (request, response, next) => {
   const formData = formDataFromBody(request.body);
 
   try {
@@ -166,7 +166,7 @@ export const createCatway: RequestHandler = async (request, response, next) => {
   }
 };
 
-export const showEditCatwayForm: RequestHandler = async (request, response, next) => {
+export const showEditCatwayFormAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
     const catway = await Catway.findOne({ catwayNumber });
@@ -188,7 +188,7 @@ export const showEditCatwayForm: RequestHandler = async (request, response, next
   }
 };
 
-export const updateCatway: RequestHandler = async (request, response, next) => {
+export const updateCatwayAction: RequestHandler = async (request, response, next) => {
   let catwayNumber: number;
 
   try {
@@ -243,7 +243,7 @@ export const updateCatway: RequestHandler = async (request, response, next) => {
   }
 };
 
-export const deleteCatway: RequestHandler = async (request, response, next) => {
+export const deleteCatwayAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
     const catway = await Catway.findOne({ catwayNumber });

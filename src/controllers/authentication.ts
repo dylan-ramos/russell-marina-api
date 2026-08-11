@@ -32,7 +32,7 @@ function saveSession(request: Express.Request): Promise<void> {
   });
 }
 
-export const showHomePage: RequestHandler = (request, response) => {
+export const showHomePageAction: RequestHandler = (request, response) => {
   if (request.session.userId) {
     response.redirect('/dashboard');
     return;
@@ -48,7 +48,7 @@ export const showHomePage: RequestHandler = (request, response) => {
   });
 };
 
-export const login: RequestHandler = async (request, response, next) => {
+export const loginAction: RequestHandler = async (request, response, next) => {
   try {
     const email =
       typeof request.body.email === 'string' ? request.body.email.trim().toLowerCase() : '';
@@ -85,7 +85,7 @@ export const login: RequestHandler = async (request, response, next) => {
   }
 };
 
-export const logout: RequestHandler = (request, response, next) => {
+export const logoutAction: RequestHandler = (request, response, next) => {
   request.session.destroy((error) => {
     if (error) {
       next(error);
@@ -97,7 +97,7 @@ export const logout: RequestHandler = (request, response, next) => {
   });
 };
 
-export const showDashboard: RequestHandler = (_request, response) => {
+export const showDashboardAction: RequestHandler = (_request, response) => {
   response.render('dashboard', {
     title: 'Tableau de bord',
     currentUser: response.locals.currentUser,
@@ -108,6 +108,6 @@ export const showDashboard: RequestHandler = (_request, response) => {
   });
 };
 
-export const showDocumentationPlaceholder: RequestHandler = (_request, response) => {
+export const showDocumentationPlaceholderAction: RequestHandler = (_request, response) => {
   response.render('documentation', { title: "Documentation de l'API" });
 };
