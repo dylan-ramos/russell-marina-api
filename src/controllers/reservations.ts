@@ -1,6 +1,5 @@
 import createError from 'http-errors';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { Error as MongooseError } from 'mongoose';
 
 import {
   createReservation,
@@ -12,16 +11,13 @@ import {
   type ReservationInput,
   updateReservation,
 } from '../services/reservations.js';
+import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
 
 interface ReservationFormData {
   clientName: string;
   boatName: string;
   startDate: string;
   endDate: string;
-}
-
-function wantsHtml(request: Request): boolean {
-  return request.accepts(['html', 'json']) === 'html';
 }
 
 function parseCatwayNumber(value: string | string[] | undefined): number {
@@ -80,31 +76,6 @@ function dateForInput(date: Date): string {
   return date.toISOString().slice(0, 10);
 }
 
-function errorStatus(error: unknown): number | undefined {
-  if (error instanceof MongooseError.ValidationError) {
-    return 422;
-  }
-
-  if (typeof error === 'object' && error !== null && 'status' in error) {
-    const status = Number(error.status);
-    return Number.isInteger(status) ? status : undefined;
-  }
-
-  return undefined;
-}
-
-function errorMessages(error: unknown): string[] {
-  if (error instanceof MongooseError.ValidationError) {
-    return Object.values(error.errors).map((validationError) => validationError.message);
-  }
-
-  if (error instanceof Error) {
-    return [error.message];
-  }
-
-  return ['La réservation ne peut pas être enregistrée.'];
-}
-
 async function renderFormError(
   error: unknown,
   request: Request,
@@ -115,27 +86,29 @@ async function renderFormError(
   reservation: ReservationFormData & { id?: string },
   catwayLocked: boolean,
 ): Promise<void> {
-  const status = errorStatus(error);
+  const details = httpErrorDetails(error, {
+    duplicateMessage: 'Ce catway est déjà réservé sur cette période.',
+  });
 
-  if (!status) {
+  if (!details) {
     next(error);
     return;
   }
 
-  if (!wantsHtml(request)) {
-    next(error);
+  if (!requestWantsHtml(request)) {
+    response.status(details.status).json({ error: details });
     return;
   }
 
   try {
-    response.status(status).render('reservations/form', {
+    response.status(details.status).render('reservations/form', {
       title: mode === 'create' ? 'Ajouter une réservation' : 'Modifier la réservation',
       mode,
       catwayNumber,
       catwayLocked,
       catways: catwayLocked ? [] : await findReservableCatways(),
       reservation,
-      errors: errorMessages(error),
+      errors: details.messages,
     });
   } catch (renderError) {
     next(renderError);
@@ -171,7 +144,7 @@ export const listCatwayReservationsAction: RequestHandler = async (request, resp
     const catwayNumber = parseCatwayNumber(request.params.catwayNumber);
     const reservations = await findReservationsByCatway(catwayNumber);
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(reservations);
       return;
     }
@@ -192,7 +165,7 @@ export const showReservationAction: RequestHandler = async (request, response, n
     const catwayNumber = parseCatwayNumber(request.params.catwayNumber);
     const reservation = await findReservation(catwayNumber, reservationIdFromRequest(request));
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(reservation);
       return;
     }
@@ -240,7 +213,7 @@ export const createReservationAction: RequestHandler = async (request, response,
     catwayNumber = catwayNumberFromRequest(request);
     const reservation = await createReservation(catwayNumber, reservationInput as ReservationInput);
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response
         .location(`/catways/${catwayNumber}/reservations/${reservation.id}`)
         .status(201)
@@ -297,7 +270,7 @@ export const updateReservationAction: RequestHandler = async (request, response,
     const reservationId = reservationIdFromRequest(request);
     const reservation = await updateReservation(catwayNumber, reservationId, reservationInput);
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(reservation);
       return;
     }
@@ -325,7 +298,7 @@ export const deleteReservationAction: RequestHandler = async (request, response,
     const catwayNumber = parseCatwayNumber(request.params.catwayNumber);
     await deleteReservation(catwayNumber, reservationIdFromRequest(request));
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(204).end();
       return;
     }

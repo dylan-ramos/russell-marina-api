@@ -1,5 +1,4 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { Error as MongooseError } from 'mongoose';
 
 import {
   createUser,
@@ -9,15 +8,12 @@ import {
   type UserInput,
   updateUser,
 } from '../services/users.js';
+import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
 
 interface UserFormData {
   username: string;
   email: string;
   password: string;
-}
-
-function wantsHtml(request: Request): boolean {
-  return request.accepts(['html', 'json']) === 'html';
 }
 
 function emailFromRoute(request: Request): string {
@@ -33,27 +29,6 @@ function inputFromBody(body: Request['body']): UserFormData {
   };
 }
 
-function errorStatus(error: unknown): number | undefined {
-  if (error instanceof MongooseError.ValidationError) {
-    return 422;
-  }
-
-  if (typeof error === 'object' && error !== null && 'status' in error) {
-    const status = Number(error.status);
-    return Number.isInteger(status) ? status : undefined;
-  }
-
-  return undefined;
-}
-
-function errorMessages(error: unknown): string[] {
-  if (error instanceof MongooseError.ValidationError) {
-    return Object.values(error.errors).map((validationError) => validationError.message);
-  }
-
-  return error instanceof Error ? [error.message] : ["L'utilisateur ne peut pas être enregistré."];
-}
-
 function handleFormError(
   error: unknown,
   request: Request,
@@ -63,24 +38,24 @@ function handleFormError(
   user: UserFormData,
   originalEmail = '',
 ): void {
-  const status = errorStatus(error);
+  const details = httpErrorDetails(error);
 
-  if (!status) {
+  if (!details) {
     next(error);
     return;
   }
 
-  if (!wantsHtml(request)) {
-    response.status(status).json({ error: { status, messages: errorMessages(error) } });
+  if (!requestWantsHtml(request)) {
+    response.status(details.status).json({ error: details });
     return;
   }
 
-  response.status(status).render('users/form', {
+  response.status(details.status).render('users/form', {
     title: mode === 'create' ? 'Ajouter un utilisateur' : "Modifier l'utilisateur",
     mode,
     originalEmail,
     user: { ...user, password: '' },
-    errors: errorMessages(error),
+    errors: details.messages,
   });
 }
 
@@ -98,7 +73,7 @@ export const listUsersAction: RequestHandler = async (request, response, next) =
   try {
     const users = await findAllUsers();
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(users);
       return;
     }
@@ -117,7 +92,7 @@ export const showUserAction: RequestHandler = async (request, response, next) =>
   try {
     const user = await findUserByEmail(emailFromRoute(request));
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(user);
       return;
     }
@@ -144,7 +119,7 @@ export const createUserAction: RequestHandler = async (request, response, next) 
   try {
     const user = await createUser(input as UserInput);
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response
         .location(`/users/${encodeURIComponent(user.email)}`)
         .status(201)
@@ -180,7 +155,7 @@ export const updateUserAction: RequestHandler = async (request, response, next) 
   try {
     const user = await updateUser(originalEmail, input);
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(user);
       return;
     }
@@ -195,14 +170,16 @@ export const deleteUserAction: RequestHandler = async (request, response, next) 
   try {
     await deleteUser(emailFromRoute(request), request.session.userId ?? '');
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(204).end();
       return;
     }
 
     response.redirect('/users?success=deleted');
   } catch (error) {
-    if (!wantsHtml(request) || errorStatus(error) !== 409) {
+    const details = httpErrorDetails(error);
+
+    if (!requestWantsHtml(request) || details?.status !== 409) {
       next(error);
       return;
     }
@@ -212,7 +189,7 @@ export const deleteUserAction: RequestHandler = async (request, response, next) 
       response.status(409).render('users/detail', {
         title: user.username,
         user,
-        error: errorMessages(error)[0],
+        error: details.messages[0],
       });
     } catch (renderError) {
       next(renderError);

@@ -248,7 +248,76 @@ describe('API HTTP', () => {
       .expect('Content-Type', /html/);
   });
 
-  test.todo('renvoie 422 plutôt que 500 pour une réservation JSON invalide');
+  test('renvoie 422 plutôt que 500 pour une réservation JSON invalide', async () => {
+    const { agent, csrfToken } = await authenticatedAgent();
+    const headers = { Accept: 'application/json', 'X-CSRF-Token': csrfToken };
+
+    await agent
+      .post('/catways')
+      .set(headers)
+      .send({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' })
+      .expect(201);
+
+    const response = await agent
+      .post('/catways/42/reservations')
+      .set(headers)
+      .send({
+        clientName: 'A',
+        boatName: 'B',
+        startDate: '2026-10-10',
+        endDate: '2026-10-12',
+      })
+      .expect(422);
+
+    assert.equal(response.body.error.status, 422);
+    assert.ok(Array.isArray(response.body.error.messages));
+    assert.match(response.body.error.messages.join(' '), /au moins 2 caractères/);
+  });
+
+  test('normalise les validations et conflits JSON des autres ressources', async () => {
+    const { agent, csrfToken } = await authenticatedAgent();
+    const headers = { Accept: 'application/json', 'X-CSRF-Token': csrfToken };
+
+    const invalidCatway = await agent
+      .post('/catways')
+      .set(headers)
+      .send({ catwayNumber: 0, catwayType: 'invalid', catwayState: '' })
+      .expect(422);
+    assert.equal(invalidCatway.body.error.status, 422);
+    assert.ok(Array.isArray(invalidCatway.body.error.messages));
+
+    await agent
+      .post('/catways')
+      .set(headers)
+      .send({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' })
+      .expect(201);
+    const duplicateCatway = await agent
+      .post('/catways')
+      .set(headers)
+      .send({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' })
+      .expect(409);
+    assert.deepEqual(duplicateCatway.body.error, {
+      status: 409,
+      messages: ['Ce numéro de catway existe déjà.'],
+    });
+
+    const invalidUser = await agent
+      .post('/users')
+      .set(headers)
+      .send({ username: 'x', email: 'invalid', password: 'court' })
+      .expect(422);
+    assert.equal(invalidUser.body.error.status, 422);
+    assert.ok(Array.isArray(invalidUser.body.error.messages));
+
+    const malformedJson = await agent
+      .post('/users')
+      .set('Accept', 'application/json')
+      .set('Content-Type', 'application/json')
+      .set('X-CSRF-Token', csrfToken)
+      .send('{"username":')
+      .expect(400);
+    assert.equal(malformedJson.body.error.status, 400);
+  });
   test.todo('empêche deux réservations concurrentes qui se chevauchent');
   test.todo('conserve une réservation courante pendant toute sa date de fin');
 });

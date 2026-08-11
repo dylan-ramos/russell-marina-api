@@ -1,18 +1,14 @@
 import createError from 'http-errors';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { Error as MongooseError } from 'mongoose';
 
 import { Catway, CATWAY_TYPES, type CatwayType } from '../models/catway.js';
 import { Reservation } from '../models/reservation.js';
+import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
 
 interface CatwayFormData {
   catwayNumber: number | string;
   catwayType: CatwayType | string;
   catwayState: string;
-}
-
-function wantsHtml(request: Request): boolean {
-  return request.accepts(['html', 'json']) === 'html';
 }
 
 function parseCatwayNumber(value: string | string[] | undefined): number {
@@ -40,14 +36,6 @@ function formDataFromBody(body: Request['body']): CatwayFormData {
   };
 }
 
-function validationMessages(error: MongooseError.ValidationError): string[] {
-  return Object.values(error.errors).map((validationError) => validationError.message);
-}
-
-function isDuplicateKeyError(error: unknown): error is { code: number } {
-  return typeof error === 'object' && error !== null && 'code' in error && error.code === 11000;
-}
-
 function handleFormError(
   error: unknown,
   request: Request,
@@ -56,31 +44,26 @@ function handleFormError(
   mode: 'create' | 'edit',
   catway: CatwayFormData,
 ): void {
-  let status = 500;
-  let errors: string[] = [];
+  const details = httpErrorDetails(error, {
+    duplicateMessage: 'Ce numéro de catway existe déjà.',
+  });
 
-  if (error instanceof MongooseError.ValidationError) {
-    status = 422;
-    errors = validationMessages(error);
-  } else if (isDuplicateKeyError(error)) {
-    status = 409;
-    errors = ['Ce numéro de catway existe déjà.'];
-  } else {
+  if (!details) {
     next(error);
     return;
   }
 
-  if (!wantsHtml(request)) {
-    response.status(status).json({ error: { status, messages: errors } });
+  if (!requestWantsHtml(request)) {
+    response.status(details.status).json({ error: details });
     return;
   }
 
-  response.status(status).render('catways/form', {
+  response.status(details.status).render('catways/form', {
     title: mode === 'create' ? 'Ajouter un catway' : `Modifier le catway ${catway.catwayNumber}`,
     mode,
     catway,
     catwayTypes: CATWAY_TYPES,
-    errors,
+    errors: details.messages,
   });
 }
 
@@ -88,7 +71,7 @@ export const listCatwaysAction: RequestHandler = async (request, response, next)
   try {
     const catways = await Catway.find().sort({ catwayNumber: 1 });
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(catways);
       return;
     }
@@ -120,7 +103,7 @@ export const showCatwayAction: RequestHandler = async (request, response, next) 
       return;
     }
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(catway);
       return;
     }
@@ -155,7 +138,7 @@ export const createCatwayAction: RequestHandler = async (request, response, next
       catwayState: formData.catwayState,
     });
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.location(`/catways/${catway.catwayNumber}`).status(201).json(catway);
       return;
     }
@@ -209,7 +192,7 @@ export const updateCatwayAction: RequestHandler = async (request, response, next
     if ('catwayNumber' in request.body || 'catwayType' in request.body) {
       const message = "Seule la description de l'état du catway peut être modifiée.";
 
-      if (!wantsHtml(request)) {
+      if (!requestWantsHtml(request)) {
         response.status(400).json({ error: { status: 400, message } });
         return;
       }
@@ -228,7 +211,7 @@ export const updateCatwayAction: RequestHandler = async (request, response, next
       typeof request.body.catwayState === 'string' ? request.body.catwayState : '';
     await catway.save();
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(200).json(catway);
       return;
     }
@@ -258,7 +241,7 @@ export const deleteCatwayAction: RequestHandler = async (request, response, next
     if (hasReservations) {
       const message = 'Ce catway ne peut pas être supprimé car il possède des réservations.';
 
-      if (!wantsHtml(request)) {
+      if (!requestWantsHtml(request)) {
         response.status(409).json({ error: { status: 409, message } });
         return;
       }
@@ -273,7 +256,7 @@ export const deleteCatwayAction: RequestHandler = async (request, response, next
 
     await catway.deleteOne();
 
-    if (!wantsHtml(request)) {
+    if (!requestWantsHtml(request)) {
       response.status(204).end();
       return;
     }
