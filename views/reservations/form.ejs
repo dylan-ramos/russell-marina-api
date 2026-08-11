@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> — Russell Marina API</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto max-w-3xl px-6 py-16">
+      <a class="text-sm font-semibold text-cyan-300 hover:text-cyan-200" href="/reservations">← Retour aux réservations</a>
+
+      <section class="mt-8 rounded-3xl border border-cyan-400/20 bg-slate-900 p-8 sm:p-10">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">Planning du port</p>
+        <h1 class="mt-2 text-3xl font-bold"><%= title %></h1>
+
+        <% if (errors.length > 0) { %>
+          <div class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert">
+            <ul class="list-disc space-y-1 pl-5">
+              <% errors.forEach((error) => { %><li><%= error %></li><% }) %>
+            </ul>
+          </div>
+        <% } %>
+
+        <form
+          class="mt-8 space-y-6"
+          action="<% if (mode === 'edit') { %>/catways/<%= catwayNumber %>/reservations/<%= reservation.id %>?_method=PUT<% } else if (catwayLocked) { %>/catways/<%= catwayNumber %>/reservations<% } else { %>/reservations<% } %>"
+          method="post"
+        >
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+
+          <div>
+            <label class="mb-2 block text-sm font-semibold" for="catwayNumber">Catway</label>
+            <% if (catwayLocked) { %>
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 opacity-60" id="catwayNumber" value="#<%= catwayNumber %>" disabled />
+            <% } else { %>
+              <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="catwayNumber" name="catwayNumber" required>
+                <option value="">Choisir un catway</option>
+                <% catways.forEach((catway) => { %>
+                  <option value="<%= catway.catwayNumber %>" <%= Number(catwayNumber) === catway.catwayNumber ? 'selected' : '' %>>
+                    #<%= catway.catwayNumber %> — <%= catway.catwayType %>
+                  </option>
+                <% }) %>
+              </select>
+            <% } %>
+          </div>
+
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label class="mb-2 block text-sm font-semibold" for="clientName">Nom du client</label>
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="clientName" name="clientName" value="<%= reservation.clientName %>" minlength="2" maxlength="100" required />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-semibold" for="boatName">Nom du bateau</label>
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="boatName" name="boatName" value="<%= reservation.boatName %>" minlength="2" maxlength="100" required />
+            </div>
+          </div>
+
+          <div class="grid gap-6 sm:grid-cols-2">
+            <div>
+              <label class="mb-2 block text-sm font-semibold" for="startDate">Date de début</label>
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="startDate" name="startDate" type="date" value="<%= reservation.startDate %>" required />
+            </div>
+            <div>
+              <label class="mb-2 block text-sm font-semibold" for="endDate">Date de fin</label>
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="endDate" name="endDate" type="date" value="<%= reservation.endDate %>" required />
+            </div>
+          </div>
+
+          <div class="flex justify-end gap-3">
+            <a class="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300" href="/reservations">Annuler</a>
+            <button class="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950 hover:bg-cyan-300" type="submit">
+              <%= mode === 'create' ? 'Créer la réservation' : 'Enregistrer les modifications' %>
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

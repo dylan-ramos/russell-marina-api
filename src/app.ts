@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { createSessionMiddleware } from './config/session.js';
 import catwaysRouter from './routes/catways.js';
 import indexRouter from './routes/index.js';
+import { catwayReservationsRouter, reservationsOverviewRouter } from './routes/reservations.js';
 import usersRouter from './routes/users.js';
 
 const app = express();
@@ -36,6 +37,8 @@ app.get('/health', (_request, response) => {
 app.use(createSessionMiddleware());
 
 app.use('/', indexRouter);
+app.use('/reservations', reservationsOverviewRouter);
+app.use('/catways/:catwayNumber/reservations', catwayReservationsRouter);
 app.use('/catways', catwaysRouter);
 app.use('/users', usersRouter);
 

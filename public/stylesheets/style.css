@@ -35,6 +35,7 @@
     --container-3xl: 48rem;
     --container-4xl: 56rem;
     --container-6xl: 72rem;
+    --container-7xl: 80rem;
     --text-xs: 0.75rem;
     --text-xs--line-height: calc(1 / 0.75);
     --text-sm: 0.875rem;
@@ -283,6 +284,9 @@
   }
   .max-w-6xl {
     max-width: var(--container-6xl);
+  }
+  .max-w-7xl {
+    max-width: var(--container-7xl);
   }
   .max-w-xl {
     max-width: var(--container-xl);
@@ -610,6 +614,9 @@
   .uppercase {
     text-transform: uppercase;
   }
+  .opacity-60 {
+    opacity: 60%;
+  }
   .shadow-2xl {
     --tw-shadow: 0 25px 50px -12px var(--tw-shadow-color, rgb(0 0 0 / 0.25));
     box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
@@ -642,6 +649,14 @@
     }
     .hover\:bg-cyan-300:hover {
       background-color: var(--color-cyan-300);
+    }
+    .hover\:bg-cyan-950\/30:hover {
+      background-color: color-mix(in srgb, oklch(30.2% 0.056 229.695) 30%, transparent);
+    }
+    @supports (color: color-mix(in lab, red, red)) {
+      .hover\:bg-cyan-950\/30:hover {
+        background-color: color-mix(in oklab, var(--color-cyan-950) 30%, transparent);
+      }
     }
     .hover\:bg-red-950\/40:hover {
       background-color: color-mix(in srgb, oklch(25.8% 0.092 26.042) 40%, transparent);
