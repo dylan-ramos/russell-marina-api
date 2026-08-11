@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> — Russell Marina API</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <header class="border-b border-slate-800 bg-slate-900">
+      <nav class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4" aria-label="Navigation principale">
+        <a class="text-lg font-bold text-cyan-300" href="/dashboard">Russell Marina</a>
+        <div class="flex items-center gap-3">
+          <a class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white" href="/catways">Catways</a>
+          <a class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-white" href="/reservations">Réservations</a>
+          <a class="rounded-lg bg-slate-800 px-3 py-2 text-sm text-white" href="/users">Utilisateurs</a>
+          <a class="rounded-lg border border-red-400/30 px-3 py-2 text-sm text-red-300 hover:bg-red-950/40" href="/logout">Déconnexion</a>
+        </div>
+      </nav>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-6 py-12">
+      <div class="flex flex-wrap items-end justify-between gap-5">
+        <div>
+          <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">Capitainerie</p>
+          <h1 class="mt-2 text-4xl font-bold"><%= title %></h1>
+          <p class="mt-2 text-slate-400"><%= users.length %> compte(s) enregistré(s)</p>
+        </div>
+        <a class="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950 hover:bg-cyan-300" href="/users/new">Ajouter un utilisateur</a>
+      </div>
+
+      <% if (notification) { %>
+        <div class="mt-8 rounded-xl border border-emerald-400/30 bg-emerald-950/40 p-4 text-emerald-200" role="status"><%= notification %></div>
+      <% } %>
+
+      <div class="mt-8 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-slate-800">
+            <thead class="text-left text-xs uppercase tracking-wider text-slate-400">
+              <tr><th class="px-6 py-4">Nom</th><th class="px-6 py-4">Adresse email</th><th class="px-6 py-4 text-right">Actions</th></tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800">
+              <% users.forEach((user) => { %>
+                <tr class="hover:bg-slate-800/40">
+                  <td class="px-6 py-4 font-semibold"><%= user.username %></td>
+                  <td class="px-6 py-4 text-slate-300"><%= user.email %></td>
+                  <td class="whitespace-nowrap px-6 py-4 text-right">
+                    <a class="font-semibold text-cyan-300 hover:text-cyan-200" href="/users/<%= encodeURIComponent(user.email) %>">Détails</a>
+                    <a class="ml-4 font-semibold text-slate-300 hover:text-white" href="/users/<%= encodeURIComponent(user.email) %>/edit">Modifier</a>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>

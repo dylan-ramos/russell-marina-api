@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> — Russell Marina API</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto max-w-3xl px-6 py-16">
+      <a class="text-sm font-semibold text-cyan-300 hover:text-cyan-200" href="/users">← Retour aux utilisateurs</a>
+      <section class="mt-8 rounded-3xl border border-cyan-400/20 bg-slate-900 p-8 shadow-xl sm:p-10">
+        <p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400"><%= mode === 'create' ? 'Nouveau compte' : 'Compte existant' %></p>
+        <h1 class="mt-2 text-3xl font-bold"><%= title %></h1>
+
+        <% if (errors.length > 0) { %>
+          <div class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert">
+            <ul class="list-disc space-y-1 pl-5"><% errors.forEach((error) => { %><li><%= error %></li><% }) %></ul>
+          </div>
+        <% } %>
+
+        <form class="mt-8 space-y-6" action="<%= mode === 'create' ? '/users' : `/users/${encodeURIComponent(originalEmail)}?_method=PUT` %>" method="post">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+          <div>
+            <label class="mb-2 block text-sm font-semibold" for="username">Nom d’utilisateur</label>
+            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400" id="username" name="username" type="text" minlength="2" maxlength="50" value="<%= user.username %>" required />
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold" for="email">Adresse email</label>
+            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400" id="email" name="email" type="email" maxlength="254" value="<%= user.email %>" required />
+          </div>
+          <div>
+            <label class="mb-2 block text-sm font-semibold" for="password">Mot de passe</label>
+            <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-cyan-400" id="password" name="password" type="password" minlength="12" <%= mode === 'create' ? 'required' : '' %> autocomplete="new-password" />
+            <p class="mt-2 text-sm text-slate-400"><%= mode === 'create' ? '12 caractères minimum.' : 'Laissez vide pour conserver le mot de passe actuel.' %></p>
+          </div>
+          <div class="flex flex-wrap justify-end gap-3">
+            <a class="rounded-xl border border-slate-700 px-5 py-3 font-semibold text-slate-300 hover:bg-slate-800" href="/users">Annuler</a>
+            <button class="rounded-xl bg-cyan-400 px-5 py-3 font-bold text-slate-950 hover:bg-cyan-300" type="submit"><%= mode === 'create' ? 'Créer le compte' : 'Enregistrer' %></button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

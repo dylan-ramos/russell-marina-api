@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= title %> — Russell Marina API</title>
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto max-w-4xl px-6 py-16">
+      <a class="text-sm font-semibold text-cyan-300 hover:text-cyan-200" href="/users">← Retour aux utilisateurs</a>
+      <section class="mt-8 rounded-3xl border border-cyan-400/20 bg-slate-900 p-8 sm:p-10">
+        <div class="flex flex-wrap items-start justify-between gap-5">
+          <div><p class="text-sm font-semibold uppercase tracking-[0.2em] text-cyan-400">Compte utilisateur</p><h1 class="mt-2 text-4xl font-bold"><%= user.username %></h1></div>
+          <a class="rounded-xl border border-slate-700 px-4 py-2 font-semibold text-slate-200 hover:bg-slate-800" href="/users/<%= encodeURIComponent(user.email) %>/edit">Modifier</a>
+        </div>
+        <% if (error) { %><div class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert"><%= error %></div><% } %>
+        <dl class="mt-8 rounded-2xl bg-slate-950 p-6">
+          <dt class="text-sm uppercase tracking-wider text-slate-400">Adresse email</dt><dd class="mt-2 text-lg"><%= user.email %></dd>
+          <dt class="mt-6 text-sm uppercase tracking-wider text-slate-400">Créé le</dt><dd class="mt-2"><%= user.createdAt.toLocaleDateString('fr-FR') %></dd>
+        </dl>
+        <div class="mt-10 border-t border-slate-800 pt-8">
+          <h2 class="font-bold text-red-300">Zone de suppression</h2>
+          <p class="mt-2 text-sm text-slate-400">Votre propre compte et le dernier compte existant sont protégés.</p>
+          <form class="mt-4" action="/users/<%= encodeURIComponent(user.email) %>?_method=DELETE" method="post">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <button class="rounded-xl border border-red-400/40 px-4 py-2 font-semibold text-red-300 hover:bg-red-950/40" type="submit">Supprimer ce compte</button>
+          </form>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
