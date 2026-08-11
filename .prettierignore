@@ -1,0 +1,7 @@
+node_modules/
+dist/
+coverage/
+public/stylesheets/style.css
+
+# Prettier ne fournit pas de parseur EJS officiel.
+views/**/*.ejs

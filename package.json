@@ -1,16 +1,44 @@
 {
   "name": "russell-marina-api",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "API et interface de gestion du port de plaisance Russell",
   "private": true,
+  "type": "module",
   "scripts": {
-    "start": "node ./bin/www"
+    "dev": "concurrently --kill-others -n server,css -c blue,cyan \"npm:dev:server\" \"npm:css:watch\"",
+    "dev:server": "tsx watch src/bin/www.ts",
+    "build": "npm run typecheck && npm run css:build && tsc",
+    "start": "node dist/bin/www.js",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "css:build": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css --minify",
+    "css:watch": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css --watch"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
-    "cookie-parser": "~1.4.4",
-    "debug": "~2.6.9",
-    "ejs": "~2.6.1",
-    "express": "~4.16.1",
-    "http-errors": "~1.6.3",
-    "morgan": "~1.9.1"
+    "cookie-parser": "^1.4.7",
+    "debug": "^4.4.3",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "http-errors": "^2.0.1",
+    "morgan": "^1.11.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/debug": "^4.1.13",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.6",
+    "@types/http-errors": "^2.0.5",
+    "@types/morgan": "^1.9.10",
+    "@types/node": "^26.2.0",
+    "concurrently": "^10.0.4",
+    "prettier": "^3.9.6",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.12",
+    "typescript": "^7.0.2"
   }
 }
