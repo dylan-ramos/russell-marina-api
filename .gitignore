@@ -57,8 +57,12 @@ typings/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
+# Local environment variables and secrets
+.env.local
+.env.*.local
+
+# The shared example configuration is versioned.
+!.env
 
 # next.js build output
 .next

@@ -9,6 +9,7 @@
     "dev:server": "tsx watch src/bin/www.ts",
     "build": "npm run typecheck && npm run css:build && tsc",
     "start": "node dist/bin/www.js",
+    "test": "node --test",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
