@@ -22,6 +22,7 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY data ./data
 COPY views ./views
 COPY public ./public
 
@@ -36,6 +37,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/data ./data
 COPY --from=build --chown=node:node /app/views ./views
 COPY --from=build --chown=node:node /app/public ./public
 

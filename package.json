@@ -10,25 +10,30 @@
     "build": "npm run typecheck && npm run css:build && tsc",
     "start": "node dist/bin/www.js",
     "test": "node --test",
+    "seed": "node dist/scripts/seed.js",
+    "seed:dev": "tsx src/scripts/seed.ts",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "css:build": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css --minify",
+    "css:build": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css",
     "css:watch": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css --watch"
   },
   "engines": {
     "node": ">=22"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
     "debug": "^4.4.3",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "http-errors": "^2.0.1",
+    "mongoose": "^9.9.2",
     "morgan": "^1.11.0"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.3.3",
+    "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/debug": "^4.1.13",
     "@types/ejs": "^3.1.5",

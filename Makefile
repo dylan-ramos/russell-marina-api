@@ -7,7 +7,7 @@ COMPOSE_PROD := $(COMPOSE) -f compose.yaml
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test clean prod-build prod-up prod-down prod-logs
+.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed clean prod-build prod-up prod-down prod-logs prod-seed
 
 help: ## Affiche les commandes disponibles
 	@awk 'BEGIN {FS = ":.*## "; printf "Commandes disponibles :\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -42,7 +42,7 @@ shell: check-env ## Ouvre un shell dans le conteneur applicatif
 	@$(COMPOSE_DEV) exec app sh
 
 install: check-env ## Installe les dépendances dans le conteneur
-	@$(COMPOSE_DEV) exec app npm install
+	@docker run --rm --user "$$(id -u):$$(id -g)" --volume "$(CURDIR):/app" --workdir /app node:22-alpine npm install
 
 css: check-env ## Compile la feuille Tailwind dans le conteneur
 	@$(COMPOSE_DEV) exec app npm run css:build
@@ -59,6 +59,9 @@ format-check: check-env ## Contrôle le formatage dans le conteneur
 test: check-env ## Lance les tests dans le conteneur
 	@$(COMPOSE_DEV) exec app npm test
 
+seed: check-env ## Importe les données initiales sans créer de doublons
+	@$(COMPOSE_DEV) exec app npm run seed:dev
+
 clean: down ## Arrête les services sans supprimer les données MongoDB
 
 prod-build: check-env ## Construit les images de production
@@ -72,3 +75,6 @@ prod-down: check-env ## Arrête l'environnement de production
 
 prod-logs: check-env ## Suit les journaux de production
 	@$(COMPOSE_PROD) logs -f
+
+prod-seed: check-env ## Importe les données initiales en production
+	@$(COMPOSE_PROD) exec app npm run seed
