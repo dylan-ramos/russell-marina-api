@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { Catway } from '../src/models/catway.js';
-import { CatwayLock } from '../src/models/catway-lock.js';
+import { DistributedLock } from '../src/models/distributed-lock.js';
 import { Reservation } from '../src/models/reservation.js';
 import { User } from '../src/models/user.js';
 import { withCatwayLock } from '../src/services/catway-locks.js';
@@ -118,17 +118,17 @@ describe('service des réservations', () => {
   });
 });
 
-describe('verrous des catways', () => {
+describe('verrous distribués', () => {
   test('récupère un verrou expiré puis le libère', async () => {
-    await CatwayLock.create({
-      catwayNumber: 42,
+    await DistributedLock.create({
+      resource: 'catway:42',
       owner: 'processus-interrompu',
       expiresAt: new Date(Date.now() - 1_000),
     });
 
     const result = await withCatwayLock(42, async () => 'operation terminée');
     assert.equal(result, 'operation terminée');
-    assert.equal(await CatwayLock.countDocuments({ catwayNumber: 42 }), 0);
+    assert.equal(await DistributedLock.countDocuments({ resource: 'catway:42' }), 0);
   });
 
   test('libère le verrou lorsqu’une opération échoue', async () => {
@@ -138,7 +138,7 @@ describe('verrous des catways', () => {
       }),
       /erreur attendue/,
     );
-    assert.equal(await CatwayLock.countDocuments({ catwayNumber: 42 }), 0);
+    assert.equal(await DistributedLock.countDocuments({ resource: 'catway:42' }), 0);
   });
 });
 
@@ -183,5 +183,29 @@ describe('service des utilisateurs', () => {
       deleteUser('unique@example.test', '000000000000000000000001'),
       (error) => errorStatus(error) === 409,
     );
+  });
+
+  test('conserve un utilisateur lors de deux suppressions concurrentes', async () => {
+    await Promise.all([
+      createUser({
+        username: 'premier',
+        email: 'premier@example.test',
+        password: 'mot-de-passe-test',
+      }),
+      createUser({
+        username: 'second',
+        email: 'second@example.test',
+        password: 'mot-de-passe-test',
+      }),
+    ]);
+
+    const results = await Promise.allSettled([
+      deleteUser('premier@example.test', '000000000000000000000001'),
+      deleteUser('second@example.test', '000000000000000000000001'),
+    ]);
+
+    assert.equal(results.filter((result) => result.status === 'fulfilled').length, 1);
+    assert.equal(results.filter((result) => result.status === 'rejected').length, 1);
+    assert.equal(await User.countDocuments(), 1);
   });
 });

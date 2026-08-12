@@ -3,6 +3,7 @@ import { isValidObjectId, type HydratedDocument } from 'mongoose';
 
 import { User, type UserDocument } from '../models/user.js';
 import { requiredText } from '../utils/validation.js';
+import { withDistributedLock } from './distributed-locks.js';
 
 export interface UserInput {
   username: unknown;
@@ -95,15 +96,17 @@ export async function updateUser(currentEmail: string, input: UserInput): Promis
 }
 
 export async function deleteUser(email: string, currentUserId: string): Promise<void> {
-  const user = await findUserByEmail(email);
+  return withDistributedLock('users:deletion', async () => {
+    const user = await findUserByEmail(email);
 
-  if (isValidObjectId(currentUserId) && user._id.equals(currentUserId)) {
-    throw createError(409, 'Vous ne pouvez pas supprimer votre propre compte.');
-  }
+    if (isValidObjectId(currentUserId) && user._id.equals(currentUserId)) {
+      throw createError(409, 'Vous ne pouvez pas supprimer votre propre compte.');
+    }
 
-  if ((await User.countDocuments()) <= 1) {
-    throw createError(409, 'Le dernier compte utilisateur ne peut pas être supprimé.');
-  }
+    if ((await User.countDocuments()) <= 1) {
+      throw createError(409, 'Le dernier compte utilisateur ne peut pas être supprimé.');
+    }
 
-  await user.deleteOne();
+    await user.deleteOne();
+  });
 }

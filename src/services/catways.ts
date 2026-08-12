@@ -1,7 +1,7 @@
 import createError from 'http-errors';
 import type { HydratedDocument } from 'mongoose';
 
-import { Catway, type CatwayDocument, type CatwayType } from '../models/catway.js';
+import { CATWAY_TYPES, Catway, type CatwayDocument, type CatwayType } from '../models/catway.js';
 import { Reservation } from '../models/reservation.js';
 import { withCatwayLock } from './catway-locks.js';
 
@@ -12,6 +12,10 @@ export interface CatwayInput {
 }
 
 type CatwayEntity = HydratedDocument<CatwayDocument>;
+
+function isCatwayType(value: unknown): value is CatwayType {
+  return CATWAY_TYPES.some((catwayType) => catwayType === value);
+}
 
 export async function findAllCatways(): Promise<CatwayEntity[]> {
   return Catway.find().sort({ catwayNumber: 1 });
@@ -27,9 +31,13 @@ export async function findCatway(catwayNumber: number): Promise<CatwayEntity> {
 }
 
 export async function createCatway(input: CatwayInput): Promise<CatwayEntity> {
+  if (!isCatwayType(input.catwayType)) {
+    throw createError(422, 'Le type du catway doit être long ou short.');
+  }
+
   return Catway.create({
     catwayNumber: Number(input.catwayNumber),
-    catwayType: input.catwayType as CatwayType,
+    catwayType: input.catwayType,
     catwayState: typeof input.catwayState === 'string' ? input.catwayState : '',
   });
 }

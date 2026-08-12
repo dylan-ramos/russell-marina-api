@@ -5,7 +5,6 @@ import {
   deleteUser,
   findAllUsers,
   findUserByEmail,
-  type UserInput,
   updateUser,
 } from '../services/users.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
@@ -114,7 +113,7 @@ export const createUserAction: RequestHandler = async (request, response, next) 
   const input = inputFromBody(request.body);
 
   try {
-    const user = await createUser(input as UserInput);
+    const user = await createUser(input);
 
     if (!requestWantsHtml(request)) {
       response

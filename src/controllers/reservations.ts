@@ -8,7 +8,6 @@ import {
   findReservableCatways,
   findReservation,
   findReservationsByCatway,
-  type ReservationInput,
   updateReservation,
 } from '../services/reservations.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
@@ -201,7 +200,7 @@ export const createReservationAction: RequestHandler = async (request, response,
 
   try {
     catwayNumber = catwayNumberFromRequest(request);
-    const reservation = await createReservation(catwayNumber, reservationInput as ReservationInput);
+    const reservation = await createReservation(catwayNumber, reservationInput);
 
     if (!requestWantsHtml(request)) {
       response

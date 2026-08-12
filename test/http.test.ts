@@ -5,7 +5,7 @@ import type { Express } from 'express';
 import mongoose from 'mongoose';
 import request, { type Agent } from 'supertest';
 
-import '../src/models/catway-lock.js';
+import '../src/models/distributed-lock.js';
 import { Catway } from '../src/models/catway.js';
 import { Reservation } from '../src/models/reservation.js';
 import { User } from '../src/models/user.js';
