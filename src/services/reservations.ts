@@ -4,6 +4,7 @@ import { isValidObjectId, type HydratedDocument } from 'mongoose';
 import { Catway } from '../models/catway.js';
 import { Reservation, type ReservationDocument } from '../models/reservation.js';
 import { parseCalendarDate } from '../utils/calendar-date.js';
+import { withCatwayLock } from './catway-locks.js';
 
 export interface ReservationInput {
   clientName: unknown;
@@ -99,11 +100,13 @@ export async function createReservation(
   catwayNumber: number,
   input: ReservationInput,
 ): Promise<ReservationEntity> {
-  await assertCatwayExists(catwayNumber);
   const normalizedInput = normalizeInput(input);
-  await assertNoOverlap(catwayNumber, normalizedInput.startDate, normalizedInput.endDate);
 
-  return Reservation.create({ ...normalizedInput, catwayNumber });
+  return withCatwayLock(catwayNumber, async () => {
+    await assertCatwayExists(catwayNumber);
+    await assertNoOverlap(catwayNumber, normalizedInput.startDate, normalizedInput.endDate);
+    return Reservation.create({ ...normalizedInput, catwayNumber });
+  });
 }
 
 export async function updateReservation(
@@ -111,22 +114,24 @@ export async function updateReservation(
   reservationId: string,
   input: ReservationInput,
 ): Promise<ReservationEntity> {
-  const reservation = await findReservation(catwayNumber, reservationId);
   const normalizedInput = normalizeInput(input);
-  await assertNoOverlap(
-    catwayNumber,
-    normalizedInput.startDate,
-    normalizedInput.endDate,
-    reservationId,
-  );
 
-  reservation.clientName = normalizedInput.clientName;
-  reservation.boatName = normalizedInput.boatName;
-  reservation.startDate = normalizedInput.startDate;
-  reservation.endDate = normalizedInput.endDate;
-  await reservation.save();
+  return withCatwayLock(catwayNumber, async () => {
+    const reservation = await findReservation(catwayNumber, reservationId);
+    await assertNoOverlap(
+      catwayNumber,
+      normalizedInput.startDate,
+      normalizedInput.endDate,
+      reservationId,
+    );
 
-  return reservation;
+    reservation.clientName = normalizedInput.clientName;
+    reservation.boatName = normalizedInput.boatName;
+    reservation.startDate = normalizedInput.startDate;
+    reservation.endDate = normalizedInput.endDate;
+    await reservation.save();
+    return reservation;
+  });
 }
 
 export async function deleteReservation(

@@ -3,6 +3,7 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
 import { Catway, CATWAY_TYPES, type CatwayType } from '../models/catway.js';
 import { Reservation } from '../models/reservation.js';
+import { withCatwayLock } from '../services/catway-locks.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
 
 interface CatwayFormData {
@@ -229,16 +230,23 @@ export const updateCatwayAction: RequestHandler = async (request, response, next
 export const deleteCatwayAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
-    const catway = await Catway.findOne({ catwayNumber });
+    const result = await withCatwayLock(catwayNumber, async () => {
+      const catway = await Catway.findOne({ catwayNumber });
 
-    if (!catway) {
-      next(createError(404, `Le catway ${catwayNumber} n'existe pas.`));
-      return;
-    }
+      if (!catway) {
+        throw createError(404, `Le catway ${catwayNumber} n'existe pas.`);
+      }
 
-    const hasReservations = await Reservation.exists({ catwayNumber });
+      const hasReservations = await Reservation.exists({ catwayNumber });
+      if (hasReservations) {
+        return { catway, deleted: false } as const;
+      }
 
-    if (hasReservations) {
+      await catway.deleteOne();
+      return { catway, deleted: true } as const;
+    });
+
+    if (!result.deleted) {
       const message = 'Ce catway ne peut pas être supprimé car il possède des réservations.';
 
       if (!requestWantsHtml(request)) {
@@ -248,13 +256,11 @@ export const deleteCatwayAction: RequestHandler = async (request, response, next
 
       response.status(409).render('catways/detail', {
         title: `Catway ${catwayNumber}`,
-        catway,
+        catway: result.catway,
         error: message,
       });
       return;
     }
-
-    await catway.deleteOne();
 
     if (!requestWantsHtml(request)) {
       response.status(204).end();

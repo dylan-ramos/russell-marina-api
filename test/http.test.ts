@@ -321,7 +321,62 @@ describe('API HTTP', () => {
       .expect(400);
     assert.equal(malformedJson.body.error.status, 400);
   });
-  test.todo('empêche deux réservations concurrentes qui se chevauchent');
+  test('empêche deux réservations concurrentes qui se chevauchent', async () => {
+    const { agent, csrfToken } = await authenticatedAgent();
+    const headers = { Accept: 'application/json', 'X-CSRF-Token': csrfToken };
+    await agent
+      .post('/catways')
+      .set(headers)
+      .send({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' })
+      .expect(201);
+
+    const [firstResponse, secondResponse] = await Promise.all([
+      agent.post('/catways/42/reservations').set(headers).send({
+        clientName: 'Premier client',
+        boatName: 'Premier bateau',
+        startDate: '2026-10-10',
+        endDate: '2026-10-15',
+      }),
+      agent.post('/catways/42/reservations').set(headers).send({
+        clientName: 'Second client',
+        boatName: 'Second bateau',
+        startDate: '2026-10-12',
+        endDate: '2026-10-14',
+      }),
+    ]);
+
+    assert.deepEqual([firstResponse.status, secondResponse.status].sort(), [201, 409]);
+    assert.equal(await Reservation.countDocuments({ catwayNumber: 42 }), 1);
+  });
+
+  test('sérialise la suppression d’un catway et la création d’une réservation', async () => {
+    const { agent, csrfToken } = await authenticatedAgent();
+    const headers = { Accept: 'application/json', 'X-CSRF-Token': csrfToken };
+    await agent
+      .post('/catways')
+      .set(headers)
+      .send({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' })
+      .expect(201);
+
+    const [deletionResponse, reservationResponse] = await Promise.all([
+      agent.delete('/catways/42').set(headers),
+      agent.post('/catways/42/reservations').set(headers).send({
+        clientName: 'Client concurrent',
+        boatName: 'Bateau concurrent',
+        startDate: '2026-11-01',
+        endDate: '2026-11-02',
+      }),
+    ]);
+
+    const statusPair = [deletionResponse.status, reservationResponse.status].sort().join(',');
+    assert.ok(statusPair === '201,409' || statusPair === '204,404');
+
+    const [catwayExists, reservationExists] = await Promise.all([
+      Catway.exists({ catwayNumber: 42 }),
+      Reservation.exists({ catwayNumber: 42 }),
+    ]);
+    assert.equal(Boolean(catwayExists), Boolean(reservationExists));
+  });
   test('conserve une réservation courante pendant toute sa date de fin', async () => {
     const today = calendarDateInTimeZone(new Date(), 'Europe/Paris');
     await Catway.create({ catwayNumber: 42, catwayType: 'long', catwayState: 'Disponible' });

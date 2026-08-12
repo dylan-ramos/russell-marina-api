@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import { Catway } from '../src/models/catway.js';
+import { CatwayLock } from '../src/models/catway-lock.js';
 import { Reservation } from '../src/models/reservation.js';
 import { User } from '../src/models/user.js';
+import { withCatwayLock } from '../src/services/catway-locks.js';
 import {
   createReservation,
   deleteReservation,
@@ -113,6 +115,30 @@ describe('service des réservations', () => {
       createReservation(42, { ...validInput, startDate: '2026-02-30' }),
       (error) => errorStatus(error) === 422,
     );
+  });
+});
+
+describe('verrous des catways', () => {
+  test('récupère un verrou expiré puis le libère', async () => {
+    await CatwayLock.create({
+      catwayNumber: 42,
+      owner: 'processus-interrompu',
+      expiresAt: new Date(Date.now() - 1_000),
+    });
+
+    const result = await withCatwayLock(42, async () => 'operation terminée');
+    assert.equal(result, 'operation terminée');
+    assert.equal(await CatwayLock.countDocuments({ catwayNumber: 42 }), 0);
+  });
+
+  test('libère le verrou lorsqu’une opération échoue', async () => {
+    await assert.rejects(
+      withCatwayLock(42, async () => {
+        throw new Error('erreur attendue');
+      }),
+      /erreur attendue/,
+    );
+    assert.equal(await CatwayLock.countDocuments({ catwayNumber: 42 }), 0);
   });
 });
 
