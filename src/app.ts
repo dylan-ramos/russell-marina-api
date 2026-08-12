@@ -4,6 +4,7 @@ import express, { type ErrorRequestHandler } from 'express';
 import helmet from 'helmet';
 import methodOverride from 'method-override';
 import logger from 'morgan';
+import mongoose from 'mongoose';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import swaggerUi from 'swagger-ui-express';
@@ -52,7 +53,11 @@ app.use(
   }),
 );
 app.get('/health', (_request, response) => {
-  response.status(200).json({ status: 'ok' });
+  const databaseConnected = mongoose.connection.readyState === 1;
+  response.status(databaseConnected ? 200 : 503).json({
+    status: databaseConnected ? 'ok' : 'unavailable',
+    database: databaseConnected ? 'connected' : 'disconnected',
+  });
 });
 app.use(createSessionMiddleware());
 

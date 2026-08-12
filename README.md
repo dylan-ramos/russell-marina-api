@@ -187,7 +187,7 @@ Créer une sauvegarde horodatée dans le dossier local ignoré `backups/` :
 make prod-backup
 ```
 
-Les archives sont compressées et protégées avec des permissions locales restrictives. Elles contiennent les données du port : elles ne doivent jamais être commitées ni rendues publiques.
+Les archives sont créées avec un `umask` privé, écrites dans un fichier temporaire puis renommées atomiquement uniquement si `mongodump` réussit. Le dossier est limité au propriétaire et les archives utilisent le mode `600`. Elles contiennent les données du port : elles ne doivent jamais être commitées ni rendues publiques. Pour une copie hors du VPS, ajouter un chiffrement avant le transfert.
 
 La restauration remplace les collections existantes. Elle exige donc le chemin explicite de l'archive et une confirmation :
 

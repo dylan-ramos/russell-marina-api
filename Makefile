@@ -108,10 +108,7 @@ prod-mongo-app-user: check-env ## Crée ou met à jour le compte MongoDB applica
 	@$(COMPOSE_PROD) exec -T mongodb sh -c 'mongosh --quiet --host 127.0.0.1 --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin /docker-entrypoint-initdb.d/10-init-app-user.js'
 
 prod-backup: check-env ## Sauvegarde MongoDB dans une archive locale compressée
-	@mkdir -p "$(BACKUP_DIR)"
-	@$(COMPOSE_PROD) exec -T mongodb sh -c 'mongodump --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --db "$$MONGO_INITDB_DATABASE" --archive --gzip' > "$(BACKUP_FILE)"
-	@chmod 600 "$(BACKUP_FILE)"
-	@echo "Sauvegarde créée : $(BACKUP_FILE)"
+	@set -eu; umask 077; mkdir -p "$(BACKUP_DIR)"; chmod 700 "$(BACKUP_DIR)"; temp_file="$(BACKUP_FILE).tmp.$$$$"; trap 'rm -f "$$temp_file"' EXIT HUP INT TERM; $(COMPOSE_PROD) exec -T mongodb sh -c 'mongodump --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --db "$$MONGO_INITDB_DATABASE" --archive --gzip' > "$$temp_file"; test -s "$$temp_file"; chmod 600 "$$temp_file"; mv "$$temp_file" "$(BACKUP_FILE)"; trap - EXIT HUP INT TERM; echo "Sauvegarde créée : $(BACKUP_FILE)"
 
 prod-restore: check-env ## Restaure BACKUP=... avec CONFIRM=restore (destructif)
 	@test -n "$(BACKUP)" || (echo "Indiquez l'archive : make prod-restore BACKUP=backups/fichier.archive.gz CONFIRM=restore" && exit 1)

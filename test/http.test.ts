@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { after, before, beforeEach, describe, test } from 'node:test';
 
 import type { Express } from 'express';
+import mongoose from 'mongoose';
 import request, { type Agent } from 'supertest';
 
 import { Catway } from '../src/models/catway.js';
@@ -63,7 +64,7 @@ describe('API HTTP', () => {
     await request(application)
       .get('/health')
       .set('Accept', 'application/json')
-      .expect(200, { status: 'ok' });
+      .expect(200, { status: 'ok', database: 'connected' });
 
     const documentation = await request(application)
       .get('/openapi.json')
@@ -394,5 +395,13 @@ describe('API HTTP', () => {
       .set('Accept', 'text/html')
       .expect(200)
       .expect(/Client du dernier jour/);
+  });
+
+  test('signale MongoDB indisponible avec HTTP 503', async () => {
+    await mongoose.disconnect();
+    await request(application)
+      .get('/health')
+      .set('Accept', 'application/json')
+      .expect(503, { status: 'unavailable', database: 'disconnected' });
   });
 });

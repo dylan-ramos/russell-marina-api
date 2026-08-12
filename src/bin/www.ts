@@ -8,6 +8,7 @@ import { connectDatabase, disconnectDatabase } from '../config/database.js';
 
 const debug = debugFactory('russell-marina-api:server');
 const port = normalizePort(process.env.PORT ?? '3000');
+const SHUTDOWN_TIMEOUT_MS = 10_000;
 
 app.set('port', port);
 
@@ -32,15 +33,24 @@ async function shutdown(signal: NodeJS.Signals): Promise<void> {
   console.info(`${signal} reçu, arrêt de l'application.`);
 
   if (server.listening) {
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
+      const timeout = setTimeout(() => {
+        console.warn('Délai d’arrêt dépassé, fermeture forcée des connexions HTTP.');
+        server.closeAllConnections();
+        resolve();
+      }, SHUTDOWN_TIMEOUT_MS);
+      timeout.unref();
+
       server.close((error) => {
+        clearTimeout(timeout);
         if (error) {
-          reject(error);
+          console.error('La fermeture du serveur HTTP a échoué :', error);
           return;
         }
 
         resolve();
       });
+      server.closeIdleConnections();
     });
   }
 

@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import type { RequestHandler } from 'express';
 
 import { SESSION_COOKIE_NAME } from '../config/session.js';
@@ -8,6 +9,7 @@ import { User } from '../models/user.js';
 import { encodedCalendarDayBounds } from '../utils/calendar-date.js';
 
 const HOME_TITLE = 'Russell Marina API';
+const DUMMY_PASSWORD_HASH = '$2b$12$T4dJrrKAA06NRdr2gxI88OAb9L59NJdxLhybPZ0oAQant4/SOAUoe';
 
 function regenerateSession(request: Express.Request): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -67,7 +69,9 @@ export const loginAction: RequestHandler = async (request, response, next) => {
     }
 
     const user = await User.findOne({ email }).select('+password');
-    const isPasswordValid = user ? await user.comparePassword(password) : false;
+    const isPasswordValid = user
+      ? await user.comparePassword(password)
+      : await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
 
     if (!user || !isPasswordValid) {
       response.status(401).render('index', {
