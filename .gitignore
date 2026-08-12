@@ -42,6 +42,9 @@ jspm_packages/
 # Compiled TypeScript output
 dist/
 
+# Generated Tailwind stylesheet
+public/stylesheets/style.css
+
 # Typescript v1 declaration files
 typings/
 

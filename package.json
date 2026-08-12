@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently --kill-others -n server,css -c blue,cyan \"npm:dev:server\" \"npm:css:watch\"",
     "dev:server": "tsx watch src/bin/www.ts",
-    "build": "npm run typecheck && npm run css:build && tsc",
+    "build": "npm run typecheck && npm run css:build && tsc --project tsconfig.production.json",
     "start": "node dist/bin/www.js",
     "test": "tsx --test --test-concurrency=1 test/**/*.test.ts",
     "seed": "node dist/scripts/seed.js",
@@ -17,7 +17,7 @@
     "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "css:build": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css",
+    "css:build": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css --minify",
     "css:watch": "npx @tailwindcss/cli -i ./src/styles/input.css -o ./public/stylesheets/style.css --watch"
   },
   "engines": {
