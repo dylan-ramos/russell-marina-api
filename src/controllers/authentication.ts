@@ -1,15 +1,11 @@
-import bcrypt from 'bcrypt';
 import type { RequestHandler } from 'express';
 
 import { SESSION_COOKIE_NAME } from '../config/session.js';
 import { rotateCsrfToken } from '../middlewares/csrf.js';
-import { Catway } from '../models/catway.js';
-import { Reservation } from '../models/reservation.js';
-import { User } from '../models/user.js';
-import { encodedCalendarDayBounds } from '../utils/calendar-date.js';
+import { authenticateUser } from '../services/authentication.js';
+import { dashboardData } from '../services/dashboard.js';
 
 const HOME_TITLE = 'Russell Marina API';
-const DUMMY_PASSWORD_HASH = '$2b$12$T4dJrrKAA06NRdr2gxI88OAb9L59NJdxLhybPZ0oAQant4/SOAUoe';
 
 function regenerateSession(request: Express.Request): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -68,12 +64,9 @@ export const loginAction: RequestHandler = async (request, response, next) => {
       return;
     }
 
-    const user = await User.findOne({ email }).select('+password');
-    const isPasswordValid = user
-      ? await user.comparePassword(password)
-      : await bcrypt.compare(password, DUMMY_PASSWORD_HASH);
+    const user = await authenticateUser(email, password);
 
-    if (!user || !isPasswordValid) {
+    if (!user) {
       response.status(401).render('index', {
         title: HOME_TITLE,
         error: 'Adresse email ou mot de passe incorrect.',
@@ -107,16 +100,7 @@ export const logoutAction: RequestHandler = (request, response, next) => {
 export const showDashboardAction: RequestHandler = async (_request, response, next) => {
   try {
     const now = new Date();
-    const today = encodedCalendarDayBounds(now, 'Europe/Paris');
-    const [currentReservations, catwayCount, reservationCount, userCount] = await Promise.all([
-      Reservation.find({ startDate: { $lt: today.next }, endDate: { $gte: today.start } }).sort({
-        endDate: 1,
-        catwayNumber: 1,
-      }),
-      Catway.countDocuments(),
-      Reservation.countDocuments(),
-      User.countDocuments(),
-    ]);
+    const { currentReservations, statistics } = await dashboardData(now);
     const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
       dateStyle: 'long',
       timeZone: 'Europe/Paris',
@@ -128,7 +112,7 @@ export const showDashboardAction: RequestHandler = async (_request, response, ne
       today: dateFormatter.format(now),
       currentReservations,
       dateFormatter,
-      statistics: { catwayCount, reservationCount, userCount },
+      statistics,
     });
   } catch (error) {
     next(error);

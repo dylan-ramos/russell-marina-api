@@ -1,29 +1,20 @@
-import createError from 'http-errors';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
 
-import { Catway, CATWAY_TYPES, type CatwayType } from '../models/catway.js';
-import { Reservation } from '../models/reservation.js';
-import { withCatwayLock } from '../services/catway-locks.js';
+import { CATWAY_TYPES, type CatwayType } from '../models/catway.js';
+import {
+  createCatway,
+  deleteCatway,
+  findAllCatways,
+  findCatway,
+  updateCatwayState,
+} from '../services/catways.js';
+import { parseCatwayNumber } from '../utils/catway-number.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
 
 interface CatwayFormData {
   catwayNumber: number | string;
   catwayType: CatwayType | string;
   catwayState: string;
-}
-
-function parseCatwayNumber(value: string | string[] | undefined): number {
-  if (typeof value !== 'string' || !/^\d+$/.test(value)) {
-    throw createError(400, 'Le numéro du catway doit être un entier positif.');
-  }
-
-  const catwayNumber = Number(value);
-
-  if (!Number.isSafeInteger(catwayNumber) || catwayNumber < 1) {
-    throw createError(400, 'Le numéro du catway doit être un entier positif.');
-  }
-
-  return catwayNumber;
 }
 
 function formDataFromBody(body: Request['body']): CatwayFormData {
@@ -70,7 +61,7 @@ function handleFormError(
 
 export const listCatwaysAction: RequestHandler = async (request, response, next) => {
   try {
-    const catways = await Catway.find().sort({ catwayNumber: 1 });
+    const catways = await findAllCatways();
 
     if (!requestWantsHtml(request)) {
       response.status(200).json(catways);
@@ -97,12 +88,7 @@ export const listCatwaysAction: RequestHandler = async (request, response, next)
 export const showCatwayAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
-    const catway = await Catway.findOne({ catwayNumber });
-
-    if (!catway) {
-      next(createError(404, `Le catway ${catwayNumber} n'existe pas.`));
-      return;
-    }
+    const catway = await findCatway(catwayNumber);
 
     if (!requestWantsHtml(request)) {
       response.status(200).json(catway);
@@ -133,11 +119,7 @@ export const createCatwayAction: RequestHandler = async (request, response, next
   const formData = formDataFromBody(request.body);
 
   try {
-    const catway = await Catway.create({
-      catwayNumber: Number(formData.catwayNumber),
-      catwayType: formData.catwayType as CatwayType,
-      catwayState: formData.catwayState,
-    });
+    const catway = await createCatway(formData);
 
     if (!requestWantsHtml(request)) {
       response.location(`/catways/${catway.catwayNumber}`).status(201).json(catway);
@@ -153,12 +135,7 @@ export const createCatwayAction: RequestHandler = async (request, response, next
 export const showEditCatwayFormAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
-    const catway = await Catway.findOne({ catwayNumber });
-
-    if (!catway) {
-      next(createError(404, `Le catway ${catwayNumber} n'existe pas.`));
-      return;
-    }
+    const catway = await findCatway(catwayNumber);
 
     response.render('catways/form', {
       title: `Modifier le catway ${catwayNumber}`,
@@ -183,15 +160,9 @@ export const updateCatwayAction: RequestHandler = async (request, response, next
   }
 
   try {
-    const catway = await Catway.findOne({ catwayNumber });
-
-    if (!catway) {
-      next(createError(404, `Le catway ${catwayNumber} n'existe pas.`));
-      return;
-    }
-
     if ('catwayNumber' in request.body || 'catwayType' in request.body) {
       const message = "Seule la description de l'état du catway peut être modifiée.";
+      const catway = await findCatway(catwayNumber);
 
       if (!requestWantsHtml(request)) {
         response.status(400).json({ error: { status: 400, message } });
@@ -208,9 +179,7 @@ export const updateCatwayAction: RequestHandler = async (request, response, next
       return;
     }
 
-    catway.catwayState =
-      typeof request.body.catwayState === 'string' ? request.body.catwayState : '';
-    await catway.save();
+    const catway = await updateCatwayState(catwayNumber, request.body.catwayState);
 
     if (!requestWantsHtml(request)) {
       response.status(200).json(catway);
@@ -230,21 +199,7 @@ export const updateCatwayAction: RequestHandler = async (request, response, next
 export const deleteCatwayAction: RequestHandler = async (request, response, next) => {
   try {
     const catwayNumber = parseCatwayNumber(request.params.id ?? '');
-    const result = await withCatwayLock(catwayNumber, async () => {
-      const catway = await Catway.findOne({ catwayNumber });
-
-      if (!catway) {
-        throw createError(404, `Le catway ${catwayNumber} n'existe pas.`);
-      }
-
-      const hasReservations = await Reservation.exists({ catwayNumber });
-      if (hasReservations) {
-        return { catway, deleted: false } as const;
-      }
-
-      await catway.deleteOne();
-      return { catway, deleted: true } as const;
-    });
+    const result = await deleteCatway(catwayNumber);
 
     if (!result.deleted) {
       const message = 'Ce catway ne peut pas être supprimé car il possède des réservations.';
