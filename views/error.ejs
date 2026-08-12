@@ -1,4 +1,4 @@
-<%- include("partials/document-start", { pageTitle: `Erreur  — Russell Marina API` }) %>
+<%- include('partials/document-start', { pageTitle: `Erreur ${status} — Russell Marina API` }) %>
     <main class="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16">
       <section class="w-full rounded-3xl border border-red-400/20 bg-slate-900 p-8 sm:p-12">
         <p class="text-sm font-semibold uppercase tracking-[0.25em] text-red-400">Erreur <%= status %></p>

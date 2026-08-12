@@ -1,4 +1,4 @@
-<%- include("partials/document-start", { pageTitle: ` — Russell Marina API` }) %>
+<%- include('partials/document-start', { pageTitle: `${title} — Russell Marina API` }) %>
     <%- include('partials/navigation', { active: 'dashboard' }) %>
 
     <main class="mx-auto max-w-6xl px-6 py-12">
@@ -41,7 +41,7 @@
           <div class="mt-6 overflow-hidden rounded-2xl border border-slate-800 bg-slate-900">
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-slate-800">
-                <thead class="text-left text-xs uppercase tracking-wider text-slate-400"><tr><th class="px-6 py-4">Catway</th><th class="px-6 py-4">Client</th><th class="px-6 py-4">Bateau</th><th class="px-6 py-4">Période</th><th class="px-6 py-4 text-right">Action</th></tr></thead>
+                <thead class="text-left text-xs uppercase tracking-wider text-slate-400"><tr><th class="px-6 py-4" scope="col">Catway</th><th class="px-6 py-4" scope="col">Client</th><th class="px-6 py-4" scope="col">Bateau</th><th class="px-6 py-4" scope="col">Période</th><th class="px-6 py-4 text-right" scope="col">Action</th></tr></thead>
                 <tbody class="divide-y divide-slate-800">
                   <% currentReservations.forEach((reservation) => { %>
                     <tr>

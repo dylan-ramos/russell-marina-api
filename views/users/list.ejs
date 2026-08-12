@@ -1,4 +1,4 @@
-<%- include("../partials/document-start", { pageTitle: ` — Russell Marina API` }) %>
+<%- include('../partials/document-start', { pageTitle: `${title} — Russell Marina API` }) %>
     <%- include('../partials/navigation', { active: 'users' }) %>
 
     <main class="mx-auto max-w-6xl px-6 py-12">
@@ -19,7 +19,7 @@
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-slate-800">
             <thead class="text-left text-xs uppercase tracking-wider text-slate-400">
-              <tr><th class="px-6 py-4">Nom</th><th class="px-6 py-4">Adresse email</th><th class="px-6 py-4 text-right">Actions</th></tr>
+              <tr><th class="px-6 py-4" scope="col">Nom</th><th class="px-6 py-4" scope="col">Adresse email</th><th class="px-6 py-4 text-right" scope="col">Actions</th></tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
               <% users.forEach((user) => { %>

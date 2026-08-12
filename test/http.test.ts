@@ -71,6 +71,9 @@ describe('API HTTP', () => {
       .set('Accept', 'application/json')
       .expect(200);
     assert.equal(documentation.body.openapi, '3.1.0');
+    assert.ok(documentation.body.paths['/reservations'].get);
+    assert.ok(documentation.body.paths['/reservations'].post);
+    assert.ok(documentation.body.paths['/logout'].post);
 
     const swagger = await request(application).get('/api-docs/').expect(200);
     const contentSecurityPolicy = swagger.headers['content-security-policy'];
@@ -169,6 +172,14 @@ describe('API HTTP', () => {
     const reservationId = reservationResponse.body._id as string;
     assert.equal(typeof reservationId, 'string');
 
+    const reservationsResponse = await agent
+      .get('/reservations')
+      .set('Accept', 'application/json')
+      .expect(200)
+      .expect('Content-Type', /json/);
+    assert.equal(reservationsResponse.body.length, 1);
+    assert.equal(reservationsResponse.body[0]._id, reservationId);
+
     const reservedCatwayDeletion = await agent.delete('/catways/42').set(jsonHeaders).expect(409);
     assert.equal(reservedCatwayDeletion.body.error.status, 409);
 
@@ -223,7 +234,8 @@ describe('API HTTP', () => {
       .get('/catways/new')
       .set('Accept', 'text/html')
       .expect(200)
-      .expect('Content-Type', /html/);
+      .expect('Content-Type', /html/)
+      .expect(/<title>Ajouter un catway — Russell Marina API<\/title>/);
     await agent
       .get('/reservations/new')
       .set('Accept', 'text/html')
@@ -242,7 +254,9 @@ describe('API HTTP', () => {
       .type('form')
       .send({ catwayNumber: 0, catwayType: 'invalid', catwayState: '' })
       .expect(422)
-      .expect('Content-Type', /html/);
+      .expect('Content-Type', /html/)
+      .expect(/id="form-errors"/)
+      .expect(/aria-invalid="true"/);
 
     await agent
       .post('/users')

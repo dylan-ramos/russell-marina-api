@@ -1,4 +1,4 @@
-<%- include("../partials/document-start", { pageTitle: ` — Russell Marina API` }) %>
+<%- include('../partials/document-start', { pageTitle: `${title} — Russell Marina API` }) %>
     <%- include('../partials/navigation', { active: 'catways' }) %>
     <main class="mx-auto max-w-3xl px-6 py-16">
       <a class="text-sm font-semibold text-cyan-300 hover:text-cyan-200" href="/catways">← Retour aux catways</a>
@@ -10,7 +10,7 @@
         <h1 class="mt-2 text-3xl font-bold"><%= title %></h1>
 
         <% if (errors.length > 0) { %>
-          <div class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert">
+          <div id="form-errors" class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert">
             <ul class="list-disc space-y-1 pl-5">
               <% errors.forEach((error) => { %>
                 <li><%= error %></li>
@@ -37,6 +37,7 @@
                 min="1"
                 step="1"
                 value="<%= catway.catwayNumber %>"
+                <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %>
                 <%= mode === 'edit' ? 'disabled' : 'required' %>
               />
             </div>
@@ -47,6 +48,7 @@
                 class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 disabled:cursor-not-allowed disabled:opacity-60"
                 id="catwayType"
                 name="catwayType"
+                <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %>
                 <%= mode === 'edit' ? 'disabled' : 'required' %>
               >
                 <% catwayTypes.forEach((catwayType) => { %>
@@ -66,6 +68,7 @@
               name="catwayState"
               minlength="2"
               maxlength="500"
+              <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %>
               required
             ><%= catway.catwayState %></textarea>
           </div>

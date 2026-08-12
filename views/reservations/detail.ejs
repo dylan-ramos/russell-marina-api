@@ -1,4 +1,4 @@
-<%- include("../partials/document-start", { pageTitle: ` — Russell Marina API` }) %>
+<%- include('../partials/document-start', { pageTitle: `${title} — Russell Marina API` }) %>
     <%- include('../partials/navigation', { active: 'reservations' }) %>
     <main class="mx-auto max-w-4xl px-6 py-16">
       <a class="text-sm font-semibold text-cyan-300 hover:text-cyan-200" href="/reservations">← Retour aux réservations</a>
@@ -25,8 +25,9 @@
         </dl>
 
         <div class="mt-10 border-t border-slate-800 pt-8">
-          <form action="/catways/<%= reservation.catwayNumber %>/reservations/<%= reservation.id %>?_method=DELETE" method="post">
+          <form class="space-y-4" action="/catways/<%= reservation.catwayNumber %>/reservations/<%= reservation.id %>?_method=DELETE" method="post">
             <input type="hidden" name="_csrf" value="<%= csrfToken %>" />
+            <label class="flex items-start gap-3 text-sm text-slate-300"><input class="mt-1" type="checkbox" required />Je confirme la suppression définitive de cette réservation.</label>
             <button class="rounded-xl border border-red-400/40 px-4 py-2 font-semibold text-red-300 hover:bg-red-950/40" type="submit">
               Supprimer cette réservation
             </button>

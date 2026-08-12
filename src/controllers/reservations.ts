@@ -112,6 +112,12 @@ async function renderFormError(
 export const listAllReservationsAction: RequestHandler = async (request, response, next) => {
   try {
     const reservations = await findAllReservations();
+
+    if (!requestWantsHtml(request)) {
+      response.status(200).json(reservations);
+      return;
+    }
+
     response.render('reservations/list', {
       title: 'Réservations',
       reservations,

@@ -105,6 +105,18 @@ export const openApiDocument = {
           endDate: { type: 'string', format: 'date', example: '2030-06-10' },
         },
       },
+      ReservationOverviewInput: {
+        allOf: [
+          { $ref: '#/components/schemas/ReservationInput' },
+          {
+            type: 'object',
+            required: ['catwayNumber'],
+            properties: {
+              catwayNumber: { type: 'integer', minimum: 1, example: 24 },
+            },
+          },
+        ],
+      },
       User: {
         type: 'object',
         description: "Le hash du mot de passe n'est jamais renvoyé.",
@@ -223,6 +235,15 @@ export const openApiDocument = {
         tags: ['Authentification'],
         summary: 'Fermer la session',
         responses: { 302: { description: "Session détruite, redirection vers l'accueil." } },
+      },
+      post: {
+        tags: ['Authentification'],
+        summary: 'Fermer la session depuis une interface protégée',
+        security: [{ sessionCookie: [], csrfToken: [] }],
+        responses: {
+          302: { description: "Session détruite, redirection vers l'accueil." },
+          403: { $ref: '#/components/responses/Forbidden' },
+        },
       },
     },
     '/catways': {
@@ -392,6 +413,51 @@ export const openApiDocument = {
           204: { description: 'Réservation supprimée.' },
           403: { $ref: '#/components/responses/Forbidden' },
           404: { $ref: '#/components/responses/NotFound' },
+        },
+      },
+    },
+    '/reservations': {
+      get: {
+        tags: ['Réservations'],
+        summary: 'Lister toutes les réservations',
+        description:
+          "Renvoie du JSON avec Accept: application/json et la page d'administration avec Accept: text/html.",
+        responses: {
+          200: {
+            description: 'Liste chronologique de toutes les réservations.',
+            content: {
+              'application/json': {
+                schema: { type: 'array', items: { $ref: '#/components/schemas/Reservation' } },
+              },
+              'text/html': { schema: { type: 'string' } },
+            },
+          },
+          401: { $ref: '#/components/responses/Unauthorized' },
+        },
+      },
+      post: {
+        tags: ['Réservations'],
+        summary: 'Créer une réservation en indiquant le catway',
+        security: [{ sessionCookie: [], csrfToken: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: { $ref: '#/components/schemas/ReservationOverviewInput' },
+            },
+          },
+        },
+        responses: {
+          201: {
+            description: 'Réservation créée.',
+            content: {
+              'application/json': { schema: { $ref: '#/components/schemas/Reservation' } },
+            },
+          },
+          403: { $ref: '#/components/responses/Forbidden' },
+          404: { $ref: '#/components/responses/NotFound' },
+          409: { $ref: '#/components/responses/Conflict' },
+          422: { $ref: '#/components/responses/ValidationError' },
         },
       },
     },

@@ -1,4 +1,4 @@
-<%- include("../partials/document-start", { pageTitle: ` — Russell Marina API` }) %>
+<%- include('../partials/document-start', { pageTitle: `${title} — Russell Marina API` }) %>
     <%- include('../partials/navigation', { active: 'reservations' }) %>
     <main class="mx-auto max-w-3xl px-6 py-16">
       <a class="text-sm font-semibold text-cyan-300 hover:text-cyan-200" href="/reservations">← Retour aux réservations</a>
@@ -8,7 +8,7 @@
         <h1 class="mt-2 text-3xl font-bold"><%= title %></h1>
 
         <% if (errors.length > 0) { %>
-          <div class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert">
+          <div id="form-errors" class="mt-6 rounded-xl border border-red-400/30 bg-red-950/40 p-4 text-red-200" role="alert">
             <ul class="list-disc space-y-1 pl-5">
               <% errors.forEach((error) => { %><li><%= error %></li><% }) %>
             </ul>
@@ -27,7 +27,7 @@
             <% if (catwayLocked) { %>
               <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 opacity-60" id="catwayNumber" value="#<%= catwayNumber %>" disabled />
             <% } else { %>
-              <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="catwayNumber" name="catwayNumber" required>
+              <select class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="catwayNumber" name="catwayNumber" <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %> required>
                 <option value="">Choisir un catway</option>
                 <% catways.forEach((catway) => { %>
                   <option value="<%= catway.catwayNumber %>" <%= Number(catwayNumber) === catway.catwayNumber ? 'selected' : '' %>>
@@ -41,22 +41,22 @@
           <div class="grid gap-6 sm:grid-cols-2">
             <div>
               <label class="mb-2 block text-sm font-semibold" for="clientName">Nom du client</label>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="clientName" name="clientName" value="<%= reservation.clientName %>" minlength="2" maxlength="100" required />
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="clientName" name="clientName" value="<%= reservation.clientName %>" minlength="2" maxlength="100" <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %> required />
             </div>
             <div>
               <label class="mb-2 block text-sm font-semibold" for="boatName">Nom du bateau</label>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="boatName" name="boatName" value="<%= reservation.boatName %>" minlength="2" maxlength="100" required />
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="boatName" name="boatName" value="<%= reservation.boatName %>" minlength="2" maxlength="100" <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %> required />
             </div>
           </div>
 
           <div class="grid gap-6 sm:grid-cols-2">
             <div>
               <label class="mb-2 block text-sm font-semibold" for="startDate">Date de début</label>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="startDate" name="startDate" type="date" value="<%= reservation.startDate %>" required />
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="startDate" name="startDate" type="date" value="<%= reservation.startDate %>" <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %> required />
             </div>
             <div>
               <label class="mb-2 block text-sm font-semibold" for="endDate">Date de fin</label>
-              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="endDate" name="endDate" type="date" value="<%= reservation.endDate %>" required />
+              <input class="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3" id="endDate" name="endDate" type="date" value="<%= reservation.endDate %>" <% if (errors.length > 0) { %>aria-describedby="form-errors" aria-invalid="true"<% } %> required />
             </div>
           </div>
 
