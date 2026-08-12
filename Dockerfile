@@ -20,8 +20,9 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-COPY tsconfig.json ./
+COPY tsconfig.json tsconfig.test.json ./
 COPY src ./src
+COPY test ./test
 COPY data ./data
 COPY views ./views
 COPY public ./public

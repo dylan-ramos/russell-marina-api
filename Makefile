@@ -29,7 +29,7 @@ build: check-env ## Construit les images de développement
 up: check-env network ## Démarre l'environnement de développement
 	@$(COMPOSE_DEV) up -d --wait mongodb
 	@$(MAKE) mongo-app-user
-	@$(COMPOSE_DEV) up -d app
+	@$(COMPOSE_DEV) up -d --force-recreate --wait app
 
 down: check-env ## Arrête l'environnement de développement
 	@$(COMPOSE_DEV) down --remove-orphans
@@ -61,6 +61,7 @@ format-check: check-env ## Contrôle le formatage dans le conteneur
 	@$(COMPOSE_DEV) exec app npm run format:check
 
 test: check-env ## Lance les tests dans le conteneur
+	@$(COMPOSE_DEV) up -d --wait mongodb
 	@$(COMPOSE_DEV) exec app npm test
 
 seed: check-env ## Importe les données initiales sans créer de doublons
@@ -83,7 +84,7 @@ prod-build: check-env ## Construit les images de production
 prod-up: check-env network ## Démarre l'environnement de production
 	@$(COMPOSE_PROD) up -d --wait mongodb
 	@$(MAKE) prod-mongo-app-user
-	@$(COMPOSE_PROD) up -d app
+	@$(COMPOSE_PROD) up -d --force-recreate --wait app
 
 prod-deploy: prod-config prod-build prod-up ## Valide, construit et démarre la production
 

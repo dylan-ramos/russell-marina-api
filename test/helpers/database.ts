@@ -38,14 +38,17 @@ export async function connectTestDatabase(): Promise<void> {
   process.env.MONGO_URI = mongoUri;
   process.env.SESSION_SECRET = 'test-session-secret-with-at-least-32-characters';
 
-  await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5_000 });
+  await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 5_000, autoIndex: false });
   await mongoose.connection.dropDatabase();
+  await Promise.all(Object.values(mongoose.models).map((model) => model.syncIndexes()));
 }
 
 export async function resetTestDatabase(): Promise<void> {
-  if (mongoose.connection.readyState === 1) {
-    await mongoose.connection.dropDatabase();
-    await Promise.all(Object.values(mongoose.models).map((model) => model.syncIndexes()));
+  const database = mongoose.connection.db;
+
+  if (mongoose.connection.readyState === 1 && database) {
+    const collections = await database.collections();
+    await Promise.all(collections.map((collection) => collection.deleteMany({})));
   }
 }
 

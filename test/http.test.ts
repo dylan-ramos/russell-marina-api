@@ -5,6 +5,7 @@ import type { Express } from 'express';
 import mongoose from 'mongoose';
 import request, { type Agent } from 'supertest';
 
+import '../src/models/catway-lock.js';
 import { Catway } from '../src/models/catway.js';
 import { Reservation } from '../src/models/reservation.js';
 import { User } from '../src/models/user.js';
@@ -435,9 +436,14 @@ describe('API HTTP', () => {
 
   test('signale MongoDB indisponible avec HTTP 503', async () => {
     await mongoose.disconnect();
-    await request(application)
-      .get('/health')
-      .set('Accept', 'application/json')
-      .expect(503, { status: 'unavailable', database: 'disconnected' });
+
+    try {
+      await request(application)
+        .get('/health')
+        .set('Accept', 'application/json')
+        .expect(503, { status: 'unavailable', database: 'disconnected' });
+    } finally {
+      await connectTestDatabase();
+    }
   });
 });

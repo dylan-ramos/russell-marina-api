@@ -93,13 +93,15 @@ Accept: application/json
 
 ### Réservations
 
-| Méthode  | Route                                      | Fonction                  |
-| -------- | ------------------------------------------ | ------------------------- |
-| `GET`    | `/catways/:id/reservations`                | Lister celles d'un catway |
-| `GET`    | `/catways/:id/reservations/:idReservation` | Consulter                 |
-| `POST`   | `/catways/:id/reservations`                | Créer                     |
-| `PUT`    | `/catways/:id/reservations/:idReservation` | Modifier                  |
-| `DELETE` | `/catways/:id/reservations/:idReservation` | Supprimer                 |
+| Méthode  | Route                                      | Fonction                       |
+| -------- | ------------------------------------------ | ------------------------------ |
+| `GET`    | `/reservations`                            | Lister toutes les réservations |
+| `POST`   | `/reservations`                            | Créer en indiquant le catway   |
+| `GET`    | `/catways/:id/reservations`                | Lister celles d'un catway      |
+| `GET`    | `/catways/:id/reservations/:idReservation` | Consulter                      |
+| `POST`   | `/catways/:id/reservations`                | Créer                          |
+| `PUT`    | `/catways/:id/reservations/:idReservation` | Modifier                       |
+| `DELETE` | `/catways/:id/reservations/:idReservation` | Supprimer                      |
 
 Une réservation est refusée si le catway n'existe pas, si les dates sont incohérentes ou si la période chevauche une réservation existante.
 
