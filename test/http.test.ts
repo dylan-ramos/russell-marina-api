@@ -71,6 +71,14 @@ describe('API HTTP', () => {
       .set('Accept', 'application/json')
       .expect(200);
     assert.equal(documentation.body.openapi, '3.1.0');
+
+    const swagger = await request(application).get('/api-docs/').expect(200);
+    const contentSecurityPolicy = swagger.headers['content-security-policy'];
+    if (typeof contentSecurityPolicy !== 'string') {
+      throw new Error("L'en-tête CSP de Swagger est absent.");
+    }
+    assert.match(contentSecurityPolicy, /default-src 'self'/);
+    assert.doesNotMatch(contentSecurityPolicy, /default-src \*/);
   });
 
   test('refuse toutes les familles de routes privées sans session', async () => {
@@ -116,6 +124,20 @@ describe('API HTTP', () => {
 
     const authenticated = await authenticatedAgent();
     await authenticated.agent.get('/dashboard').expect(200);
+  });
+
+  test('déconnecte la session avec un POST protégé par CSRF', async () => {
+    const { agent, csrfToken } = await authenticatedAgent();
+
+    await agent.post('/logout').set('Accept', 'text/html').send({}).expect(403);
+    await agent
+      .post('/logout')
+      .set('Accept', 'text/html')
+      .set('X-CSRF-Token', csrfToken)
+      .send({})
+      .expect(302)
+      .expect('Location', '/');
+    await agent.get('/dashboard').set('Accept', 'application/json').expect(401);
   });
 
   test('exécute les CRUD JSON avec session et jeton CSRF', async () => {

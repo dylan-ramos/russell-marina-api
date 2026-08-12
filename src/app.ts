@@ -1,5 +1,4 @@
 import createError from 'http-errors';
-import cookieParser from 'cookie-parser';
 import express, { type ErrorRequestHandler } from 'express';
 import helmet from 'helmet';
 import methodOverride from 'method-override';
@@ -28,7 +27,20 @@ app.set('views', path.join(projectRoot, 'views'));
 app.set('view engine', 'ejs');
 
 const applicationSecurityHeaders = helmet(isProduction ? {} : { contentSecurityPolicy: false });
-const documentationSecurityHeaders = helmet({ contentSecurityPolicy: false });
+const documentationSecurityHeaders = helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      fontSrc: ["'self'", 'data:'],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+});
 app.use((request, response, next) => {
   const securityHeaders = request.path.startsWith('/api-docs')
     ? documentationSecurityHeaders
@@ -39,7 +51,6 @@ app.use(logger(isProduction ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(methodOverride('_method'));
-app.use(cookieParser());
 app.use(express.static(path.join(projectRoot, 'public')));
 app.get('/openapi.json', (_request, response) => {
   response.status(200).json(openApiDocument);

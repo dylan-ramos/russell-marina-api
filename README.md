@@ -204,6 +204,8 @@ Effectuer une nouvelle sauvegarde avant toute restauration.
 - cookies `httpOnly`, `sameSite` et `secure` en production ;
 - protection CSRF en temps constant sur les mutations ;
 - limitation des tentatives de connexion ;
+- stockage du rate limiter en mémoire, adapté au déploiement actuel à une instance ; utiliser un stockage partagé avant de multiplier les réplicas ;
+- déconnexion par formulaire `POST` protégé par CSRF dans l'interface ; la route `GET /logout` reste disponible pour respecter le brief ;
 - en-têtes Helmet et absence de stack en production ;
 - validation explicite et Mongoose des entrées ;
 - aucun secret versionné et aucun port MongoDB public.

@@ -15,6 +15,7 @@ const router = Router();
 router.get('/', provideCsrfToken, showHomePageAction);
 router.post('/login', loginRateLimit, provideCsrfToken, verifyCsrfToken, loginAction);
 router.get('/logout', logoutAction);
-router.get('/dashboard', requireAuthentication, showDashboardAction);
+router.post('/logout', requireAuthentication, provideCsrfToken, verifyCsrfToken, logoutAction);
+router.get('/dashboard', requireAuthentication, provideCsrfToken, showDashboardAction);
 
 export default router;
