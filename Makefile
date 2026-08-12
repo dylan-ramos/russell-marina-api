@@ -9,7 +9,7 @@ BACKUP_FILE ?= $(BACKUP_DIR)/russell-marina-$(shell date -u +%Y%m%dT%H%M%SZ).arc
 
 .DEFAULT_GOAL := help
 
-.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed reset-admin clean prod-config prod-build prod-up prod-deploy prod-down prod-restart prod-ps prod-logs prod-seed prod-reset-admin prod-backup prod-restore
+.PHONY: help check-env network config build up down restart ps logs shell install css typecheck format format-check test seed reset-admin mongo-app-user clean prod-config prod-build prod-up prod-deploy prod-down prod-restart prod-ps prod-logs prod-seed prod-reset-admin prod-mongo-app-user prod-backup prod-restore
 
 help: ## Affiche les commandes disponibles
 	@awk 'BEGIN {FS = ":.*## "; printf "Commandes disponibles :\n"} /^[a-zA-Z_-]+:.*## / {printf "  %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -27,7 +27,9 @@ build: check-env ## Construit les images de développement
 	@$(COMPOSE_DEV) build
 
 up: check-env network ## Démarre l'environnement de développement
-	@$(COMPOSE_DEV) up -d
+	@$(COMPOSE_DEV) up -d --wait mongodb
+	@$(MAKE) mongo-app-user
+	@$(COMPOSE_DEV) up -d app
 
 down: check-env ## Arrête l'environnement de développement
 	@$(COMPOSE_DEV) down --remove-orphans
@@ -67,6 +69,9 @@ seed: check-env ## Importe les données initiales sans créer de doublons
 reset-admin: check-env ## Remplace l'unique utilisateur avec les valeurs SEED_ADMIN_*
 	@$(COMPOSE_DEV) exec app npm run admin:reset:dev
 
+mongo-app-user: check-env ## Crée ou met à jour le compte MongoDB limité de l'application
+	@$(COMPOSE_DEV) exec -T mongodb sh -c 'mongosh --quiet --host 127.0.0.1 --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin /docker-entrypoint-initdb.d/10-init-app-user.js'
+
 clean: down ## Arrête les services sans supprimer les données MongoDB
 
 prod-config: check-env ## Valide la configuration Compose de production
@@ -76,7 +81,9 @@ prod-build: check-env ## Construit les images de production
 	@$(COMPOSE_PROD) build
 
 prod-up: check-env network ## Démarre l'environnement de production
-	@$(COMPOSE_PROD) up -d
+	@$(COMPOSE_PROD) up -d --wait mongodb
+	@$(MAKE) prod-mongo-app-user
+	@$(COMPOSE_PROD) up -d app
 
 prod-deploy: prod-config prod-build prod-up ## Valide, construit et démarre la production
 
@@ -96,6 +103,9 @@ prod-seed: check-env ## Importe les données initiales en production
 
 prod-reset-admin: check-env prod-build ## Reconstruit puis remplace l'unique utilisateur de production
 	@$(COMPOSE_PROD) run --rm app npm run admin:reset
+
+prod-mongo-app-user: check-env ## Crée ou met à jour le compte MongoDB applicatif en production
+	@$(COMPOSE_PROD) exec -T mongodb sh -c 'mongosh --quiet --host 127.0.0.1 --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin /docker-entrypoint-initdb.d/10-init-app-user.js'
 
 prod-backup: check-env ## Sauvegarde MongoDB dans une archive locale compressée
 	@mkdir -p "$(BACKUP_DIR)"

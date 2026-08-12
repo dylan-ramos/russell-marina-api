@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { mongoConnectionUri } from './mongodb.js';
+
 let connectionPromise: Promise<typeof mongoose> | undefined;
 
 export async function connectDatabase(): Promise<typeof mongoose> {
@@ -7,13 +9,7 @@ export async function connectDatabase(): Promise<typeof mongoose> {
     return mongoose;
   }
 
-  const mongoUri = process.env.MONGO_URI;
-
-  if (!mongoUri) {
-    throw new Error('La variable MONGO_URI est obligatoire.');
-  }
-
-  connectionPromise ??= mongoose.connect(mongoUri, {
+  connectionPromise ??= mongoose.connect(mongoConnectionUri(), {
     serverSelectionTimeoutMS: 10_000,
   });
 

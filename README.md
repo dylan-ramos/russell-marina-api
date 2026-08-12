@@ -26,6 +26,8 @@ Modifier ensuite toutes les valeurs sensibles de `.env.local`, en particulier :
 ```dotenv
 MONGO_ROOT_USERNAME=russell_local
 MONGO_ROOT_PASSWORD=un-mot-de-passe-aleatoire
+MONGO_APP_USERNAME=russell_app
+MONGO_APP_PASSWORD=un-autre-mot-de-passe-aleatoire
 SESSION_SECRET=une-longue-chaine-aleatoire
 SEED_ADMIN_USERNAME=admin
 SEED_ADMIN_EMAIL=admin@example.test
@@ -33,6 +35,8 @@ SEED_ADMIN_PASSWORD=un-mot-de-passe-de-12-caracteres-minimum
 ```
 
 `.env` contient uniquement des exemples et reste versionné. `.env.local` surcharge ces valeurs, contient les vrais secrets et est ignoré par Git.
+
+Le compte `MONGO_ROOT_*` sert uniquement à administrer, sauvegarder et restaurer MongoDB. L'application reçoit exclusivement `MONGO_APP_*`, limité à la lecture et l'écriture de sa base. `make up` et `make prod-up` créent ou mettent à jour ce compte automatiquement, y compris avec un volume MongoDB existant. Les caractères réservés des identifiants sont encodés dans Node lors de la construction de l'URI.
 
 ```bash
 make build
@@ -54,11 +58,13 @@ Les identifiants de connexion sont les valeurs `SEED_ADMIN_EMAIL` et `SEED_ADMIN
 | `make shell`                       | Ouvrir un shell dans l'application                    |
 | `make seed`                        | Importer les données initiales sans doublon           |
 | `make reset-admin`                 | Remplacer l'unique compte initial avec `SEED_ADMIN_*` |
+| `make mongo-app-user`              | Mettre à jour le compte MongoDB applicatif limité     |
 | `make typecheck`                   | Vérifier TypeScript                                   |
 | `make test`                        | Lancer les tests Node                                 |
 | `make format`                      | Appliquer Prettier                                    |
 | `make prod-build` / `make prod-up` | Construire et lancer la production                    |
 | `make prod-deploy`                 | Valider, construire et lancer la production           |
+| `make prod-mongo-app-user`         | Mettre à jour le compte MongoDB applicatif du VPS     |
 | `make prod-seed`                   | Importer les données en production                    |
 | `make prod-ps` / `make prod-logs`  | Contrôler les conteneurs de production                |
 | `make prod-backup`                 | Créer une archive MongoDB locale compressée           |

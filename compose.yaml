@@ -4,12 +4,16 @@ services:
     build:
       context: .
       target: production
-    env_file:
-      - .env
-      - .env.local
     environment:
       NODE_ENV: production
-      MONGO_URI: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongodb:27017/${MONGO_DATABASE}?authSource=admin
+      MONGO_HOST: mongodb
+      MONGO_DATABASE: ${MONGO_DATABASE}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
     depends_on:
       mongodb:
         condition: service_healthy
@@ -42,8 +46,11 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD}
     volumes:
       - mongodb_data:/data/db
+      - ./docker/mongodb/init-app-user.js:/docker-entrypoint-initdb.d/10-init-app-user.js:ro
     networks:
       - backend
     healthcheck:

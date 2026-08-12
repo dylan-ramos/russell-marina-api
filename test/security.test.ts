@@ -5,6 +5,7 @@ import express from 'express';
 import session from 'express-session';
 import request from 'supertest';
 
+import { mongoConnectionUri } from '../src/config/mongodb.js';
 import { provideCsrfToken, verifyCsrfToken } from '../src/middlewares/csrf.js';
 import { loginRateLimit } from '../src/middlewares/login-rate-limit.js';
 
@@ -72,5 +73,27 @@ describe('limitation des connexions', () => {
       .expect(429);
     assert.match(blockedResponse.text, /Trop de tentatives de connexion/);
     assert.ok(blockedResponse.headers['ratelimit']);
+  });
+});
+
+describe('connexion MongoDB applicative', () => {
+  test('encode les identifiants et ignore une URI root hors des tests', () => {
+    const previousEnvironment = { ...process.env };
+
+    try {
+      process.env.NODE_ENV = 'production';
+      process.env.MONGO_URI = 'mongodb://root:secret@mongodb/admin';
+      process.env.MONGO_DATABASE = 'russell_marina';
+      process.env.MONGO_APP_USERNAME = 'russell@app';
+      process.env.MONGO_APP_PASSWORD = 'mot:de/passe@fort';
+      process.env.MONGO_HOST = 'mongodb';
+
+      assert.equal(
+        mongoConnectionUri(),
+        'mongodb://russell%40app:mot%3Ade%2Fpasse%40fort@mongodb:27017/russell_marina?authSource=russell_marina',
+      );
+    } finally {
+      process.env = previousEnvironment;
+    }
   });
 });

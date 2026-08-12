@@ -1,6 +1,8 @@
 import MongoStore from 'connect-mongo';
 import session, { type SessionOptions } from 'express-session';
 
+import { mongoConnectionUri } from './mongodb.js';
+
 export const SESSION_COOKIE_NAME = 'russell.sid';
 const SESSION_DURATION_MS = 8 * 60 * 60 * 1_000;
 
@@ -15,7 +17,7 @@ function requiredEnvironmentVariable(name: string): string {
 }
 
 export function createSessionMiddleware(): ReturnType<typeof session> {
-  const mongoUri = requiredEnvironmentVariable('MONGO_URI');
+  const mongoUri = mongoConnectionUri();
   const secret = requiredEnvironmentVariable('SESSION_SECRET');
 
   if (secret.length < 32) {
