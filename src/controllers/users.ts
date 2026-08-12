@@ -9,12 +9,19 @@ import {
   updateUser,
 } from '../services/users.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
+import { notificationFromQuery } from '../utils/notifications.js';
 
 interface UserFormData {
   username: string;
   email: string;
   password: string;
 }
+
+const USER_NOTIFICATIONS = {
+  created: "L'utilisateur a été créé.",
+  updated: "L'utilisateur a été modifié.",
+  deleted: "L'utilisateur a été supprimé.",
+} as const;
 
 function emailFromRoute(request: Request): string {
   const email = request.params.email;
@@ -59,16 +66,6 @@ function handleFormError(
   });
 }
 
-function successNotification(request: Request): string | undefined {
-  const messages: Record<string, string> = {
-    created: "L'utilisateur a été créé.",
-    updated: "L'utilisateur a été modifié.",
-    deleted: "L'utilisateur a été supprimé.",
-  };
-  const key = typeof request.query.success === 'string' ? request.query.success : '';
-  return messages[key];
-}
-
 export const listUsersAction: RequestHandler = async (request, response, next) => {
   try {
     const users = await findAllUsers();
@@ -81,7 +78,7 @@ export const listUsersAction: RequestHandler = async (request, response, next) =
     response.render('users/list', {
       title: 'Utilisateurs',
       users,
-      notification: successNotification(request),
+      notification: notificationFromQuery(request, USER_NOTIFICATIONS),
     });
   } catch (error) {
     next(error);

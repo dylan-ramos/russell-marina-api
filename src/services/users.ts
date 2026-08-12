@@ -2,6 +2,7 @@ import createError from 'http-errors';
 import { isValidObjectId, type HydratedDocument } from 'mongoose';
 
 import { User, type UserDocument } from '../models/user.js';
+import { requiredText } from '../utils/validation.js';
 
 export interface UserInput {
   username: unknown;
@@ -10,14 +11,6 @@ export interface UserInput {
 }
 
 type UserEntity = HydratedDocument<UserDocument>;
-
-function requiredText(value: unknown, fieldName: string): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw createError(422, `${fieldName} est obligatoire.`);
-  }
-
-  return value.trim();
-}
 
 function normalizeEmail(value: unknown): string {
   return requiredText(value, "L'adresse email").toLowerCase();

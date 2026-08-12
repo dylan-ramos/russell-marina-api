@@ -1,12 +1,4 @@
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title><%= title %></title>
-    <link rel="stylesheet" href="/stylesheets/style.css" />
-  </head>
-  <body class="min-h-screen bg-slate-950 text-slate-100">
+<%- include("partials/document-start", { pageTitle: title }) %>
     <main class="mx-auto grid min-h-screen max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-2">
       <section>
         <p class="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
@@ -77,5 +69,4 @@
         </form>
       </section>
     </main>
-  </body>
-</html>
+<%- include("partials/document-end") %>

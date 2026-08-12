@@ -13,6 +13,7 @@ import {
 } from '../services/reservations.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
 import { parseCatwayNumber } from '../utils/catway-number.js';
+import { notificationFromQuery } from '../utils/notifications.js';
 
 interface ReservationFormData {
   clientName: string;
@@ -20,6 +21,12 @@ interface ReservationFormData {
   startDate: string;
   endDate: string;
 }
+
+const RESERVATION_NOTIFICATIONS = {
+  created: 'La réservation a été créée.',
+  updated: 'La réservation a été modifiée.',
+  deleted: 'La réservation a été supprimée.',
+} as const;
 
 function reservationIdFromRequest(request: Request): string {
   const reservationId = request.params.idReservation;
@@ -102,16 +109,6 @@ async function renderFormError(
   }
 }
 
-function successNotification(request: Request): string | undefined {
-  const notifications: Record<string, string> = {
-    created: 'La réservation a été créée.',
-    updated: 'La réservation a été modifiée.',
-    deleted: 'La réservation a été supprimée.',
-  };
-  const key = typeof request.query.success === 'string' ? request.query.success : '';
-  return notifications[key];
-}
-
 export const listAllReservationsAction: RequestHandler = async (request, response, next) => {
   try {
     const reservations = await findAllReservations();
@@ -119,7 +116,7 @@ export const listAllReservationsAction: RequestHandler = async (request, respons
       title: 'Réservations',
       reservations,
       selectedCatwayNumber: undefined,
-      notification: successNotification(request),
+      notification: notificationFromQuery(request, RESERVATION_NOTIFICATIONS),
     });
   } catch (error) {
     next(error);
@@ -140,7 +137,7 @@ export const listCatwayReservationsAction: RequestHandler = async (request, resp
       title: `Réservations du catway ${catwayNumber}`,
       reservations,
       selectedCatwayNumber: catwayNumber,
-      notification: successNotification(request),
+      notification: notificationFromQuery(request, RESERVATION_NOTIFICATIONS),
     });
   } catch (error) {
     next(error);

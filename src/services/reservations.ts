@@ -4,6 +4,7 @@ import { isValidObjectId, type HydratedDocument } from 'mongoose';
 import { Catway } from '../models/catway.js';
 import { Reservation, type ReservationDocument } from '../models/reservation.js';
 import { parseCalendarDate } from '../utils/calendar-date.js';
+import { requiredText } from '../utils/validation.js';
 import { withCatwayLock } from './catway-locks.js';
 
 export interface ReservationInput {
@@ -14,14 +15,6 @@ export interface ReservationInput {
 }
 
 type ReservationEntity = HydratedDocument<ReservationDocument>;
-
-function requiredText(value: unknown, fieldName: string): string {
-  if (typeof value !== 'string' || !value.trim()) {
-    throw createError(422, `${fieldName} est obligatoire.`);
-  }
-
-  return value.trim();
-}
 
 function normalizeInput(
   input: ReservationInput,

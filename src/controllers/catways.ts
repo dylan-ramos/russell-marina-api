@@ -10,6 +10,13 @@ import {
 } from '../services/catways.js';
 import { parseCatwayNumber } from '../utils/catway-number.js';
 import { httpErrorDetails, requestWantsHtml } from '../utils/http.js';
+import { notificationFromQuery } from '../utils/notifications.js';
+
+const CATWAY_NOTIFICATIONS = {
+  created: 'Le catway a été créé.',
+  updated: "L'état du catway a été modifié.",
+  deleted: 'Le catway a été supprimé.',
+} as const;
 
 interface CatwayFormData {
   catwayNumber: number | string;
@@ -68,17 +75,10 @@ export const listCatwaysAction: RequestHandler = async (request, response, next)
       return;
     }
 
-    const messages: Record<string, string> = {
-      created: 'Le catway a été créé.',
-      updated: "L'état du catway a été modifié.",
-      deleted: 'Le catway a été supprimé.',
-    };
-    const notificationKey = typeof request.query.success === 'string' ? request.query.success : '';
-
     response.render('catways/list', {
       title: 'Catways',
       catways,
-      notification: messages[notificationKey],
+      notification: notificationFromQuery(request, CATWAY_NOTIFICATIONS),
     });
   } catch (error) {
     next(error);
